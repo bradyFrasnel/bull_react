@@ -1,0 +1,733 @@
+:root {
+  --primary: #576CA8; /* Bleu intelligent pour les boutons */
+  --primary-hover: #4a5c8e;
+  --theme-dark: #274690; /* Bleu français pour les barres */
+  --bg-color: #f8fafc;
+  --surface: #ffffff;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius: 0.375rem;
+  --shadow: 0 2px 4px -1px rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Style test pour vérifier le chargement du CSS */
+body {
+  background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%) !important;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.15s ease-in-out;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Styles globaux compacts */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.4rem !important;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.7rem !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  line-height: 1.1;
+}
+
+.btn .icon {
+  margin-right: 0.4rem;
+}
+
+.btn-lg {
+  padding: 0.3rem 0.6rem !important;
+  font-size: 0.7rem !important;
+}
+
+.btn-sm {
+  padding: 0.15rem 0.3rem !important;
+  font-size: 0.6rem !important;
+}
+
+input, select, textarea {
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.1;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* Formulaires compacts */
+.form-control-compact {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  background: var(--bg-color);
+  color: var(--text-main);
+}
+
+.form-control-compact:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(87, 108, 168, 0.1);
+}
+
+.form-group {
+  margin-bottom: 0.5rem !important;
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 0.65rem !important;
+  color: var(--text-main);
+  margin-bottom: 0.2rem !important;
+  display: block;
+}
+
+.card {
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 0.75rem !important;
+}
+
+.page-header {
+  margin-bottom: 1rem !important;
+}
+
+.page-header h2 {
+  font-size: 1.2rem !important;
+  margin-bottom: 0.2rem;
+}
+
+.page-header p {
+  font-size: 0.7rem !important;
+  color: var(--text-muted);
+}
+
+.table-container {
+  overflow-x: auto;
+  font-size: 0.7rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+}
+
+th, td {
+  padding: 0.35rem 0.5rem !important;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-weight: 500;
+  font-size: 0.65rem !important;
+  background: var(--bg-color);
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+/* Tableaux compacts style enseignants */
+.teachers-table {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 2.5fr 1.5fr 0.8fr;
+  background: var(--bg-color);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-cell {
+  padding: 0.35rem 0.5rem;
+  font-weight: 500;
+  color: var(--text-main);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  border-right: 1px solid var(--border);
+}
+
+.header-cell:last-child {
+  border-right: none;
+}
+
+.table-cell {
+  padding: 0.35rem 0.5rem;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--border);
+  min-height: 32px;
+  font-size: 0.7rem;
+  color: var(--text-main);
+}
+
+.table-cell:last-child {
+  border-right: none;
+  justify-content: center;
+}
+
+.cell-text {
+  font-size: 0.7rem;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  padding: 0.15rem 0.35rem !important;
+  border-radius: 9999px;
+  font-size: 0.55rem !important;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Avatars compacts */
+.avatar-circle-small {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+}
+
+/* Actions compactes */
+.action-btn {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s ease;
+  font-size: 0.6rem;
+  padding: 0;
+}
+
+.action-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.action-btn.danger:hover {
+  background: var(--danger);
+}
+
+.teacher-actions-inline {
+  display: flex;
+  gap: 0.05rem;
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.email-cell .cell-text {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.specialty-text {
+  color: var(--primary);
+  font-weight: 500;
+  font-size: 0.65rem;
+}
+
+/* Styles Modernes et Minimalistes pour Tables */
+.modern-table {
+  background: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.modern-table-header {
+  background: #f8f9fa;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modern-table-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.modern-table-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.modern-table-wrapper {
+  overflow-x: auto;
+}
+
+.modern-table-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8rem;
+}
+
+.modern-table-grid th {
+  background: #f8f9fa;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-main);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+}
+
+.modern-table-grid td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  vertical-align: middle;
+  font-size: 0.8rem;
+  color: var(--text-main);
+}
+
+.modern-table-grid tr:last-child td {
+  border-bottom: none;
+}
+
+.modern-table-grid tr:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Boutons Actions Style Outline */
+.action-btn-outline {
+  padding: 0.4rem 0.8rem !important;
+  border: 1px solid var(--primary) !important;
+  background: transparent !important;
+  color: var(--primary) !important;
+  border-radius: 6px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+}
+
+.action-btn-outline:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(87, 108, 168, 0.2);
+}
+
+.action-btn-outline.edit {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.action-btn-outline.edit:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.action-btn-outline.delete {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.action-btn-outline.delete:hover {
+  background: var(--danger);
+  color: white;
+}
+
+.action-btn-outline.view {
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+}
+
+.action-btn-outline.view:hover {
+  background: var(--text-muted);
+  color: white;
+}
+
+/* Boutons Principaux Modernes */
+.btn-modern {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+}
+
+.btn-modern-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-modern-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(87, 108, 168, 0.2);
+}
+
+.btn-modern-secondary {
+  background: white;
+  color: var(--text-main);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.btn-modern-secondary:hover {
+  background: #f8f9fa;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Pagination Moderne */
+.modern-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 1rem;
+}
+
+.pagination-btn {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: white;
+  color: var(--text-main);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.pagination-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0 1rem;
+}
+
+/* Inputs Modernes pour Saisie */
+.grade-input-modern {
+  width: 80px;
+  padding: 0.4rem !important;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  text-align: center;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.grade-input-modern:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(87, 108, 168, 0.1);
+}
+
+.grade-input-modern:disabled {
+  background: #f8f9fa;
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.is-failed {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.is-failed td {
+  color: var(--danger);
+}
+
+/* Styles pour les listes d'étudiants */
+.student-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.student-item.active {
+  background: rgba(87, 108, 168, 0.1);
+  border-left: 3px solid var(--primary);
+}
+
+.student-item.active .avatar-circle-small {
+  background: var(--primary);
+  color: white;
+}
+
+/* Styles Modernes pour Page Admin */
+.modern-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.modern-stat-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.modern-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.modern-stat-card .stat-content h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 0.25rem 0;
+}
+
+.modern-stat-card .stat-content p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  font-weight: 500;
+}
+
+.modern-shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.modern-shortcut-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-shortcut-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  text-decoration: none;
+  color: inherit;
+}
+
+.modern-shortcut-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+
+.modern-shortcut-card:hover::before {
+  transform: scaleY(1);
+}
+
+.modern-shortcut-card .shortcut-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.modern-shortcut-card .shortcut-content {
+  flex: 1;
+}
+
+.modern-shortcut-card .shortcut-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 0.25rem 0;
+}
+
+.modern-shortcut-card .shortcut-content p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.modern-shortcut-card .shortcut-arrow {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.modern-shortcut-card:hover .shortcut-arrow {
+  color: var(--primary);
+  transform: translateX(4px);
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 400px !important;
+  border-radius: var(--radius);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 0.75rem !important;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8fafc;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 0.9rem !important;
+}
+
+.modal-body {
+  padding: 0.75rem !important;
+}
+
+.modal-footer {
+  padding: 0.75rem !important;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  background-color: #f8fafc;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem !important;
+}
+
+.form-grid.single-column {
+  grid-template-columns: 1fr;
+}
