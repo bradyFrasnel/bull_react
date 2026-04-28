@@ -1,3 +1,4 @@
+// Types d'authentification
 export interface LoginCredentials {
   nom: string;
   password: string;
@@ -26,3 +27,9 @@ export interface LoginResponse {
   user?: User;
   [key: string]: any;
 }
+
+// Export des types académiques
+export * from './academic.types';
+export * from './evaluation.types';
+export * from './results.types';
+export * from './bulletin.types';
