@@ -108,7 +108,6 @@ export const DashboardAdmin: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statCards.map((card) => {
             const Icon = card.icon;
-            const [gradientColor, bgColor] = colorClasses[card.color].split(' ');
             return (
               <button
                 key={card.label}

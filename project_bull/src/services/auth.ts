@@ -1,5 +1,5 @@
 import { api } from './api';
-import { LoginCredentials, UserRole, LoginResponse } from '../types';
+import { UserRole, LoginResponse } from '../types';
 
 export const authService = {
   async login(nom: string, password: string, role: UserRole): Promise<LoginResponse> {
@@ -36,5 +36,13 @@ export const authService = {
 
   getToken(): string | null {
     return localStorage.getItem('access_token');
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const role = this.getUserRole();
+    if (!role) throw new Error('Utilisateur non connecté');
+    
+    const endpoint = `/auth/${role}/change-password`;
+    await api.put(endpoint, { currentPassword, newPassword });
   },
 };

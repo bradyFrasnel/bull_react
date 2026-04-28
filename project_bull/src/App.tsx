@@ -14,6 +14,11 @@ import { GestionEnseignantsSecretariat } from './pages/secretariat/GestionEnseig
 import { GestionEtudiantsSecretariat } from './pages/secretariat/GestionEtudiantsSecretariat';
 import { GestionAcademiqueSecretariat } from './pages/secretariat/GestionAcademiqueSecretariat';
 import { ProfilePageSecretariat } from './pages/secretariat/ProfilePageSecretariat';
+// Pages Enseignant
+import { Dashboard as DashboardEnseignant } from './pages/enseignant/Dashboard';
+import { SaisirNotes } from './pages/enseignant/SaisirNotes';
+import { ConsulterEtudiants } from './pages/enseignant/ConsulterEtudiants';
+import { ProfileEnseignant } from './pages/enseignant/ProfileEnseignant';
 
 function App() {
   return (
@@ -77,6 +82,40 @@ function App() {
             element={
               <ProtectedRoute requiredRole="admin">
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Enseignant Routes */}
+          <Route
+            path="/enseignant/dashboard"
+            element={
+              <ProtectedRoute requiredRole="enseignant">
+                <DashboardEnseignant />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/enseignant/saisir-notes"
+            element={
+              <ProtectedRoute requiredRole="enseignant">
+                <SaisirNotes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/enseignant/consulter-etudiants"
+            element={
+              <ProtectedRoute requiredRole="enseignant">
+                <ConsulterEtudiants />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/enseignant/profil"
+            element={
+              <ProtectedRoute requiredRole="enseignant">
+                <ProfileEnseignant />
               </ProtectedRoute>
             }
           />

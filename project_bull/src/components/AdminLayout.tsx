@@ -5,7 +5,6 @@ import {
   Menu,
   X,
   LogOut,
-  Users,
   BookOpen,
   FileText,
   User,

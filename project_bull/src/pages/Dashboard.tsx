@@ -63,14 +63,6 @@ export const Dashboard: React.FC = () => {
     gray: 'bg-gray-600 hover:bg-gray-700',
   };
 
-  const moduleClasses: Record<string, string> = {
-    blue: 'hover:border-blue-300 hover:shadow-blue-100',
-    green: 'hover:border-green-300 hover:shadow-green-100',
-    amber: 'hover:border-amber-300 hover:shadow-amber-100',
-    red: 'hover:border-red-300 hover:shadow-red-100',
-    gray: 'hover:border-gray-300 hover:shadow-gray-100',
-  };
-
   const getDashboardContent = () => {
     switch (user.role) {
       case 'etudiant':

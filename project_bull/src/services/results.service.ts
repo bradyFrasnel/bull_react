@@ -5,8 +5,6 @@ import {
   ResultatSemestre,
   ResultatAnnuel,
   DetailsCalculMatiere,
-  DetailsCalculUE,
-  DetailsCalculSemestre,
   StatistiquesMatiere,
   StatistiquesUE,
   StatistiquesSemestre,

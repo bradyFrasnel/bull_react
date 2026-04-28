@@ -13,8 +13,6 @@ import {
   ResultatSemestre,
   ResultatAnnuel,
   StatistiquesMatiere,
-  StatistiquesUE,
-  StatistiquesSemestre,
   StatistiquesPromotion,
 } from '../types';
 
