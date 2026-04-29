@@ -64,6 +64,21 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       ],
     },
     {
+      label: 'Saisir Notes',
+      icon: FileText,
+      path: `${basePath}/saisir-notes`,
+    },
+    {
+      label: 'Absences',
+      icon: FileText,
+      path: `${basePath}/absences`,
+    },
+    {
+      label: 'Calculs & Validation',
+      icon: FileText,
+      path: `${basePath}/calculs`,
+    },
+    {
       label: 'Bulletins',
       icon: FileText,
       path: `${basePath}/bulletins`,
