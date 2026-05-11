@@ -60,38 +60,33 @@ export const evaluationService = {
     await api.delete(`/evaluations/${id}`);
   },
 
-  // Validation de rattrapage
+  // Validation de rattrapage — le backend gère cette règle automatiquement.
+  // Cette méthode fait un appel préventif pour afficher un message clair à l'utilisateur.
   async validateRattrapage(
     etudiantId: string,
     matiereId: string
   ): Promise<ValidationRattrapage> {
     try {
       const evaluations = await this.getByEtudiantAndMatiere(etudiantId, matiereId);
-      
+
       const cc = evaluations.find((e) => e.type === 'CC');
       const examen = evaluations.find((e) => e.type === 'EXAMEN');
       const rattrapage = evaluations.find((e) => e.type === 'RATTRAPAGE');
 
-      // Si rattrapage déjà saisi
       if (rattrapage) {
-        return {
-          autorise: false,
-          raison: 'Un rattrapage a déjà été saisi pour cette matière',
-        };
+        return { autorise: false, raison: 'Un rattrapage a déjà été saisi pour cette matière' };
       }
 
-      // Si CC ou Examen manquant
+      // Le backend exige CC ET Examen pour autoriser le rattrapage
       if (!cc || !examen) {
-        return {
-          autorise: false,
-          raison: 'CC ou Examen manquant',
-        };
+        return { autorise: false, raison: 'CC ou Examen manquant — les deux sont requis avant le rattrapage' };
       }
 
-      // Calcul de la moyenne initiale
-      const moyenneInitiale = cc.note * 0.4 + examen.note * 0.6;
+      // Règle backend : rattrapage autorisé uniquement si moyenne initiale < 6
+      // Calcul : 2 meilleures notes parmi CC et Examen
+      const notes = [cc.note, examen.note].sort((a, b) => b - a);
+      const moyenneInitiale = notes.reduce((a, b) => a + b, 0) / notes.length;
 
-      // Rattrapage autorisé uniquement si moyenne < 6
       if (moyenneInitiale >= 6) {
         return {
           autorise: false,
@@ -100,12 +95,12 @@ export const evaluationService = {
         };
       }
 
-      return {
-        autorise: true,
-        moyenneInitiale,
-      };
-    } catch (error) {
-      throw error;
+      return { autorise: true, moyenneInitiale };
+    } catch (err: any) {
+      // Si le backend retourne déjà un message d'erreur explicite, on l'utilise
+      const msg = err.response?.data?.message;
+      if (msg) return { autorise: false, raison: msg };
+      throw err;
     }
   },
 

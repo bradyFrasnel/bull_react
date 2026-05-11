@@ -2,19 +2,30 @@ import { api } from './api';
 import { UserRole, LoginResponse } from '../types';
 
 export const authService = {
+  /**
+   * Connexion — le backend retourne :
+   * { access_token, admin/etudiant/enseignant/secretariat: { id, nom, email, role } }
+   */
   async login(nom: string, password: string, role: UserRole): Promise<LoginResponse> {
     const endpoint = `/auth/${role}/login`;
-    const response = await api.post<LoginResponse>(endpoint, { nom, password });
+    const response = await api.post<any>(endpoint, { nom, password });
+    const data = response.data;
 
-    if (response.data.access_token) {
-      localStorage.setItem('access_token', response.data.access_token);
+    if (data.access_token) {
+      localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('user_role', role);
-      localStorage.setItem('user_data', JSON.stringify(response.data));
+      // Le backend retourne la clé selon le rôle :
+      // admin → data.admin, etudiant → data.etudiant, enseignant → data.enseignant, secretariat → data.secretariat
+      const userData = data[role] ?? data.admin ?? data.user ?? {};
+      localStorage.setItem('user_data', JSON.stringify(userData));
     }
 
-    return response.data;
+    return data;
   },
 
+  /**
+   * Profil — retourne : { id, nom, email, role, utilisateurId, utilisateur: {...} }
+   */
   async getProfile() {
     const response = await api.get('/profil');
     return response.data;
@@ -38,11 +49,11 @@ export const authService = {
     return localStorage.getItem('access_token');
   },
 
-  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
-    const role = this.getUserRole();
-    if (!role) throw new Error('Utilisateur non connecté');
-    
-    const endpoint = `/auth/${role}/change-password`;
-    await api.put(endpoint, { currentPassword, newPassword });
+  /**
+   * Changement de mot de passe
+   * Doc : POST /profil/change-password avec { oldPassword, newPassword }
+   */
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+    await api.post('/profil/change-password', { oldPassword, newPassword });
   },
 };

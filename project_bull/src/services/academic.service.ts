@@ -109,35 +109,53 @@ export const matiereService = {
 };
 
 // ============ ÉTUDIANTS ============
+// Le backend retourne { utilisateurId, prenom, matricule, ... } sans champ "id" séparé.
+// On normalise pour que etudiant.id = etudiant.utilisateurId.
+const normalizeEtudiant = (e: any): Etudiant => ({
+  ...e,
+  id: e.utilisateurId ?? e.id,
+  utilisateurId: e.utilisateurId ?? e.id,
+});
+
 export const etudiantService = {
   async getAll(): Promise<Etudiant[]> {
     const response = await api.get('/etudiants');
-    return response.data;
+    return (response.data || []).map(normalizeEtudiant);
   },
 
   async getById(id: string): Promise<Etudiant> {
     const response = await api.get(`/etudiants/${id}`);
-    return response.data;
+    return normalizeEtudiant(response.data);
   },
 
   async getByMatricule(matricule: string): Promise<Etudiant> {
     const response = await api.get(`/etudiants/matricule/${matricule}`);
-    return response.data;
+    return normalizeEtudiant(response.data);
   },
 
   async getByUserId(userId: string): Promise<Etudiant> {
-    const response = await api.get(`/etudiants/user/${userId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/etudiants/user/${userId}`);
+      return normalizeEtudiant(response.data);
+    } catch {
+      // Fallback : chercher dans la liste complète
+      const all = await api.get('/etudiants');
+      const found = (all.data as any[]).find(
+        e => e.utilisateurId === userId || e.id === userId
+      );
+      if (!found) throw new Error('Étudiant non trouvé');
+      return normalizeEtudiant(found);
+    }
   },
 
   async create(data: CreateEtudiantForm): Promise<Etudiant> {
     const response = await api.post('/etudiants', data);
-    return response.data;
+    return normalizeEtudiant(response.data);
   },
 
   async update(id: string, data: Partial<CreateEtudiantForm>): Promise<Etudiant> {
     const response = await api.put(`/etudiants/${id}`, data);
-    return response.data;
+    return normalizeEtudiant(response.data);
   },
 
   async delete(id: string): Promise<void> {
@@ -146,30 +164,46 @@ export const etudiantService = {
 };
 
 // ============ ENSEIGNANTS ============
+const normalizeEnseignant = (e: any): Enseignant => ({
+  ...e,
+  id: e.utilisateurId ?? e.id,
+  utilisateurId: e.utilisateurId ?? e.id,
+});
+
 export const enseignantService = {
   async getAll(): Promise<Enseignant[]> {
     const response = await api.get('/enseignants');
-    return response.data;
+    return (response.data || []).map(normalizeEnseignant);
   },
 
   async getById(id: string): Promise<Enseignant> {
     const response = await api.get(`/enseignants/${id}`);
-    return response.data;
+    return normalizeEnseignant(response.data);
   },
 
   async getByUserId(userId: string): Promise<Enseignant> {
-    const response = await api.get(`/enseignants/user/${userId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/enseignants/user/${userId}`);
+      return normalizeEnseignant(response.data);
+    } catch {
+      // Fallback : chercher dans la liste complète
+      const all = await api.get('/enseignants');
+      const found = (all.data as any[]).find(
+        e => e.utilisateurId === userId || e.id === userId
+      );
+      if (!found) throw new Error('Enseignant non trouvé');
+      return normalizeEnseignant(found);
+    }
   },
 
   async create(data: CreateEnseignantForm): Promise<Enseignant> {
     const response = await api.post('/enseignants', data);
-    return response.data;
+    return normalizeEnseignant(response.data);
   },
 
   async update(id: string, data: Partial<CreateEnseignantForm>): Promise<Enseignant> {
     const response = await api.put(`/enseignants/${id}`, data);
-    return response.data;
+    return normalizeEnseignant(response.data);
   },
 
   async delete(id: string): Promise<void> {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { EtudiantLayout } from '../../components/EtudiantLayout';
 import {
   etudiantService,
   semestreService,
@@ -8,6 +9,7 @@ import {
   resultatSemestreService,
   resultatAnnuelService,
 } from '../../services';
+import { bulletinService } from '../../services/bulletin.service';
 import {
   FileText,
   Download,
@@ -106,6 +108,43 @@ export const Bulletins: React.FC = () => {
       setLoadingBulletin(true);
       setError('');
 
+      // Utiliser l'endpoint bulletin agrégé du backend
+      // Réponse : { etudiant, semestre, ues[{ code, libelle, creditsTotal, moyenne, creditsAcquis, acquise, compensee, matieres[{ libelle, coefficient, credits, noteCC, noteExamen, noteRattrapage, moyenne, absences }] }], resultat, statistiques }
+      try {
+        const bulletinData = await bulletinService.getBulletinSemestre(
+          etudiant.id,
+          selectedSemestre
+        );
+
+        if (bulletinData?.ues) {
+          // Mapper la réponse backend vers notre structure UERow
+          const ues: UERow[] = bulletinData.ues.map((ue: any) => ({
+            code: ue.code,
+            libelle: ue.libelle,
+            matieres: (ue.matieres || []).map((m: any) => ({
+              libelle: m.libelle,
+              coefficient: m.coefficient,
+              credits: m.credits,
+              cc: m.noteCC,
+              examen: m.noteExamen,
+              rattrapage: m.noteRattrapage,
+              moyenne: m.moyenne,
+            })),
+            moyenne: ue.moyenne,
+            creditsTotal: ue.creditsTotal,
+            creditsAcquis: ue.creditsAcquis ?? 0,
+            acquise: ue.acquise ?? false,
+          }));
+          setUesData(ues);
+
+          if (bulletinData.resultat) setResultat(bulletinData.resultat);
+          return;
+        }
+      } catch {
+        // Fallback : construire depuis les évaluations brutes
+      }
+
+      // Fallback : construire depuis les évaluations brutes
       const semestre = await semestreService.getById(selectedSemestre);
       const evaluations = await evaluationService.getByEtudiant(etudiant.id);
 
@@ -124,14 +163,12 @@ export const Bulletins: React.FC = () => {
           const cc = evals.find(e => e.type === 'CC')?.note;
           const examen = evals.find(e => e.type === 'EXAMEN')?.note;
           const rattrapage = evals.find(e => e.type === 'RATTRAPAGE')?.note;
-
           const notes = [cc, examen, rattrapage].filter(n => n !== undefined) as number[];
           let moyenne: number | undefined;
           if (notes.length > 0) {
             const sorted = [...notes].sort((a, b) => b - a).slice(0, 2);
             moyenne = sorted.reduce((a, b) => a + b, 0) / sorted.length;
           }
-
           return { libelle: matiere.libelle, coefficient: matiere.coefficient, credits: matiere.credits, cc, examen, rattrapage, moyenne };
         });
 
@@ -142,19 +179,10 @@ export const Bulletins: React.FC = () => {
           const coef = matAvecMoy.reduce((acc, m) => acc + m.coefficient, 0);
           moyenneUE = somme / coef;
         }
-
         const creditsTotal = matieres.reduce((acc, m) => acc + m.credits, 0);
         const acquise = moyenneUE !== undefined && moyenneUE >= 10;
 
-        return {
-          code: ue.code,
-          libelle: ue.libelle,
-          matieres,
-          moyenne: moyenneUE,
-          creditsTotal,
-          creditsAcquis: acquise ? creditsTotal : 0,
-          acquise,
-        };
+        return { code: ue.code, libelle: ue.libelle, matieres, moyenne: moyenneUE, creditsTotal, creditsAcquis: acquise ? creditsTotal : 0, acquise };
       });
 
       setUesData(ues);
@@ -169,6 +197,16 @@ export const Bulletins: React.FC = () => {
     if (!etudiant) return;
     try {
       setLoadingBulletin(true);
+      // Essayer l'endpoint bulletin annuel agrégé
+      try {
+        const data = await bulletinService.getBulletinAnnuel(etudiant.id);
+        if (data) {
+          setResultatAnnuel(data);
+          return;
+        }
+      } catch {
+        // Fallback sur les résultats annuels
+      }
       const annuels = await resultatAnnuelService.getByEtudiant(etudiant.id);
       if (annuels.length > 0) setResultatAnnuel(annuels[0]);
       else setResultatAnnuel(null);
@@ -208,14 +246,12 @@ export const Bulletins: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
+      <EtudiantLayout><div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 animate-spin text-green-600" /></div></EtudiantLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <EtudiantLayout>
       {/* Header — masqué à l'impression */}
       <div className="bg-white shadow print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -613,6 +649,6 @@ export const Bulletins: React.FC = () => {
           </>
         )}
       </div>
-    </div>
-  );
+  </EtudiantLayout>
+);
 };

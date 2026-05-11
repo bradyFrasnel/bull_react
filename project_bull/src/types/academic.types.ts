@@ -34,7 +34,9 @@ export interface Matiere {
 }
 
 export interface Etudiant {
-  id: string;
+  // La clé primaire retournée par le backend est utilisateurId
+  // GET /etudiants retourne : { utilisateurId, prenom, matricule, ... }
+  id: string;           // alias de utilisateurId pour compatibilité
   utilisateurId: string;
   prenom: string;
   matricule: string;

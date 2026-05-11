@@ -1,3 +1,4 @@
+import { EnseignantLayout } from '../../components/EnseignantLayout';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -211,7 +212,7 @@ export const SaisirNotes: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <EnseignantLayout>
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -429,6 +430,6 @@ export const SaisirNotes: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+  </EnseignantLayout>
+);
 };

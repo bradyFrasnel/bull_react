@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { Enseignant, Matiere } from '../../types';
 
+import { EnseignantLayout } from '../../components/EnseignantLayout';
+
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -67,37 +69,29 @@ export const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
+      <EnseignantLayout>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      </EnseignantLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Tableau de Bord Enseignant
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Bienvenue, {enseignant?.prenom} {enseignant?.utilisateur?.nom}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                Matricule: {enseignant?.matricule}
+    <EnseignantLayout>
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Tableau de Bord</h1>
+          <p className="text-gray-600 mt-1">
+            Bienvenue, {enseignant?.prenom} {enseignant?.utilisateur?.nom}
+            {enseignant?.matricule && (
+              <span className="ml-2 text-sm bg-gray-100 px-2 py-1 rounded">
+                {enseignant.matricule}
               </span>
-            </div>
-          </div>
+            )}
+          </p>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error Alert */}
         {error && (
           <div className="mb-6 flex items-start gap-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -231,6 +225,6 @@ export const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </EnseignantLayout>
   );
 };

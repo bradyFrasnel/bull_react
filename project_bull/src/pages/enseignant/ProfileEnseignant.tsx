@@ -1,3 +1,4 @@
+import { EnseignantLayout } from '../../components/EnseignantLayout';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -78,10 +79,7 @@ export const ProfileEnseignant: React.FC = () => {
       setError('');
       setSuccess('');
 
-      await authService.changePassword(
-        passwordForm.currentPassword,
-        passwordForm.newPassword
-      );
+      await authService.changePassword(passwordForm.currentPassword, passwordForm.newPassword);
 
       setSuccess('Mot de passe modifié avec succès');
       setPasswordForm({
@@ -117,7 +115,7 @@ export const ProfileEnseignant: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <EnseignantLayout>
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -398,6 +396,6 @@ export const ProfileEnseignant: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+  </EnseignantLayout>
+);
 };

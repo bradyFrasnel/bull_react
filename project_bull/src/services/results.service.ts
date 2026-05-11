@@ -4,7 +4,6 @@ import {
   MoyenneUE,
   ResultatSemestre,
   ResultatAnnuel,
-  DetailsCalculMatiere,
   StatistiquesMatiere,
   StatistiquesUE,
   StatistiquesSemestre,
@@ -13,42 +12,36 @@ import {
 
 // ============ CALCULS ============
 export const calculService = {
-  // Calculer la moyenne d'une matière
-  async calculerMatiere(etudiantId: string, matiereId: string): Promise<MoyenneMatiere> {
+  // Calculer la moyenne d'une matière (Secretariat + Enseignant)
+  async calculerMatiere(etudiantId: string, matiereId: string): Promise<any> {
     const response = await api.post(
       `/calculs/etudiant/${etudiantId}/matiere/${matiereId}`
     );
     return response.data;
   },
 
-  // Calculer la moyenne d'une UE
-  async calculerUE(etudiantId: string, ueId: string): Promise<MoyenneUE> {
+  // Calculer la moyenne d'une UE (Secretariat + Enseignant)
+  async calculerUE(etudiantId: string, ueId: string): Promise<any> {
     const response = await api.post(`/calculs/etudiant/${etudiantId}/ue/${ueId}`);
     return response.data;
   },
 
-  // Calculer la moyenne d'un semestre
-  async calculerSemestre(
-    etudiantId: string,
-    semestreId: string
-  ): Promise<ResultatSemestre> {
+  // Calculer la moyenne d'un semestre (Secretariat + Enseignant)
+  async calculerSemestre(etudiantId: string, semestreId: string): Promise<any> {
     const response = await api.post(
       `/calculs/etudiant/${etudiantId}/semestre/${semestreId}`
     );
     return response.data;
   },
 
-  // Recalculer tout pour un étudiant
-  async recalculerTout(etudiantId: string): Promise<ResultatAnnuel> {
+  // Recalculer tout — Secretariat UNIQUEMENT (pas enseignant)
+  async recalculerTout(etudiantId: string): Promise<any> {
     const response = await api.post(`/calculs/etudiant/${etudiantId}/recalculer-tout`);
     return response.data;
   },
 
-  // Obtenir les détails de calcul d'une matière
-  async getDetailsMatiere(
-    etudiantId: string,
-    matiereId: string
-  ): Promise<DetailsCalculMatiere> {
+  // Obtenir les détails de calcul d'une matière (Secretariat + Enseignant)
+  async getDetailsMatiere(etudiantId: string, matiereId: string): Promise<any> {
     const response = await api.get(
       `/calculs/etudiant/${etudiantId}/matiere/${matiereId}/details`
     );
@@ -59,13 +52,17 @@ export const calculService = {
 // ============ MOYENNES MATIÈRES ============
 export const moyenneMatiereService = {
   async getByEtudiant(etudiantId: string): Promise<MoyenneMatiere[]> {
-    const response = await api.get(`/moyennes-matieres/etudiant/${etudiantId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/moyennes-matieres/etudiant/${etudiantId}`);
+      return response.data;
+    } catch { return []; }
   },
 
   async getByMatiere(matiereId: string): Promise<MoyenneMatiere[]> {
-    const response = await api.get(`/moyennes-matieres/matiere/${matiereId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/moyennes-matieres/matiere/${matiereId}`);
+      return response.data;
+    } catch { return []; }
   },
 
   async getByEtudiantAndMatiere(
@@ -82,13 +79,17 @@ export const moyenneMatiereService = {
 // ============ MOYENNES UE ============
 export const moyenneUEService = {
   async getByEtudiant(etudiantId: string): Promise<MoyenneUE[]> {
-    const response = await api.get(`/moyennes-ue/etudiant/${etudiantId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/moyennes-ue/etudiant/${etudiantId}`);
+      return response.data;
+    } catch { return []; }
   },
 
   async getByUE(ueId: string): Promise<MoyenneUE[]> {
-    const response = await api.get(`/moyennes-ue/ue/${ueId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/moyennes-ue/ue/${ueId}`);
+      return response.data;
+    } catch { return []; }
   },
 
   async getByEtudiantAndUE(etudiantId: string, ueId: string): Promise<MoyenneUE> {
@@ -100,13 +101,17 @@ export const moyenneUEService = {
 // ============ RÉSULTATS SEMESTRE ============
 export const resultatSemestreService = {
   async getByEtudiant(etudiantId: string): Promise<ResultatSemestre[]> {
-    const response = await api.get(`/resultats-semestre/etudiant/${etudiantId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/resultats-semestre/etudiant/${etudiantId}`);
+      return response.data;
+    } catch { return []; }
   },
 
   async getBySemestre(semestreId: string): Promise<ResultatSemestre[]> {
-    const response = await api.get(`/resultats-semestre/semestre/${semestreId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/resultats-semestre/semestre/${semestreId}`);
+      return response.data;
+    } catch { return []; }
   },
 
   async getByEtudiantAndSemestre(
@@ -123,13 +128,17 @@ export const resultatSemestreService = {
 // ============ RÉSULTATS ANNUELS ============
 export const resultatAnnuelService = {
   async getByEtudiant(etudiantId: string): Promise<ResultatAnnuel[]> {
-    const response = await api.get(`/resultats-annuel/etudiant/${etudiantId}`);
-    return response.data;
+    try {
+      const response = await api.get(`/resultats-annuel/etudiant/${etudiantId}`);
+      return response.data;
+    } catch { return []; }
   },
 
   async getByAnnee(anneeUniversitaire: string): Promise<ResultatAnnuel[]> {
-    const response = await api.get(`/resultats-annuel/annee/${anneeUniversitaire}`);
-    return response.data;
+    try {
+      const response = await api.get(`/resultats-annuel/annee/${anneeUniversitaire}`);
+      return response.data;
+    } catch { return []; }
   },
 
   async getByEtudiantAndAnnee(

@@ -14,6 +14,8 @@ import {
   User,
 } from 'lucide-react';
 import { Etudiant, ResultatSemestre, ResultatAnnuel } from '../../types';
+import { EtudiantLayout } from '../../components/EtudiantLayout';
+import { formatDecisionJury, getMentionColorClass, formatMention, getDecisionColorClass } from '../../utils';
 
 export const DashboardEtudiant: React.FC = () => {
   const navigate = useNavigate();
@@ -58,80 +60,42 @@ export const DashboardEtudiant: React.FC = () => {
     }
   };
 
-  const getMentionColor = (mention?: string) => {
-    switch (mention) {
-      case 'TRES_BIEN': return 'text-green-600 bg-green-100';
-      case 'BIEN': return 'text-blue-600 bg-blue-100';
-      case 'ASSEZ_BIEN': return 'text-amber-600 bg-amber-100';
-      case 'PASSABLE': return 'text-orange-600 bg-orange-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const getMentionLabel = (mention?: string) => {
-    switch (mention) {
-      case 'TRES_BIEN': return 'Très Bien';
-      case 'BIEN': return 'Bien';
-      case 'ASSEZ_BIEN': return 'Assez Bien';
-      case 'PASSABLE': return 'Passable';
-      default: return '—';
-    }
-  };
-
-  const getDecisionLabel = (decision?: string) => {
-    switch (decision) {
-      case 'DIPLOME': return 'Diplômé(e)';
-      case 'REPRISE_SOUTENANCE': return 'Reprise de Soutenance';
-      case 'REDOUBLE': return 'Redouble';
-      default: return 'En attente';
-    }
-  };
-
-  const getDecisionColor = (decision?: string) => {
-    switch (decision) {
-      case 'DIPLOME': return 'text-green-700 bg-green-100 border-green-200';
-      case 'REPRISE_SOUTENANCE': return 'text-amber-700 bg-amber-100 border-amber-200';
-      case 'REDOUBLE': return 'text-red-700 bg-red-100 border-red-200';
-      default: return 'text-gray-700 bg-gray-100 border-gray-200';
-    }
-  };
+  const getMentionColor = getMentionColorClass;
+  const getMentionLabel = formatMention;
+  const getDecisionLabel = formatDecisionJury;
+  const getDecisionColor = getDecisionColorClass;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
+      <EtudiantLayout>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        </div>
+      </EtudiantLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Mon Tableau de Bord</h1>
-              <p className="text-gray-600 mt-1">
-                Bienvenue, {etudiant?.prenom} {etudiant?.utilisateur?.nom}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+    <EtudiantLayout>
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Mon Tableau de Bord</h1>
+            <p className="text-gray-600 mt-1">
+              Bienvenue, {etudiant?.prenom} {etudiant?.utilisateur?.nom}
+              <span className="ml-2 text-sm bg-gray-100 px-2 py-1 rounded">
                 {etudiant?.matricule}
               </span>
-              <button
-                onClick={() => navigate('/etudiant/profil')}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <User className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
+            </p>
           </div>
+          <button
+            onClick={() => navigate('/etudiant/profil')}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <User className="w-5 h-5 text-gray-600" />
+          </button>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
           <div className="mb-6 flex items-start gap-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -294,6 +258,6 @@ export const DashboardEtudiant: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </EtudiantLayout>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { EtudiantLayout } from '../../components/EtudiantLayout';
 import { etudiantService, authService } from '../../services';
 import {
   User,
@@ -83,9 +84,7 @@ export const ProfileEtudiant: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      </div>
+      <EtudiantLayout><div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 animate-spin text-green-600" /></div></EtudiantLayout>
     );
   }
 
@@ -115,7 +114,7 @@ export const ProfileEtudiant: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <EtudiantLayout>
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -310,6 +309,6 @@ export const ProfileEtudiant: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+  </EtudiantLayout>
+);
 };
