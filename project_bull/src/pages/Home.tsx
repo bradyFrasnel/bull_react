@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Users, GraduationCap, Key } from 'lucide-react';
+import logoBullAsur from '../../assets/logos/logo_bull_asur.png';
+import accueilBg from '../../assets/images/acceuil_bull.jpeg';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -10,101 +12,126 @@ export const Home: React.FC = () => {
       id: 'etudiant',
       label: 'Étudiant',
       icon: GraduationCap,
-      description: 'Accès étudiant',
-      color: 'from-blue-600 to-blue-800',
-      hoverColor: 'hover:from-blue-700 hover:to-blue-900',
+      description: 'Consultez vos notes et bulletins',
+      color: 'from-blue-500 to-blue-700',
+      glow: 'hover:shadow-blue-500/40',
+      border: 'hover:border-blue-400',
     },
     {
       id: 'enseignant',
       label: 'Enseignant',
       icon: BookOpen,
-      description: 'Espace enseignants',
-      color: 'from-green-600 to-green-800',
-      hoverColor: 'hover:from-green-700 hover:to-green-900',
+      description: 'Saisissez et gérez les évaluations',
+      color: 'from-emerald-500 to-emerald-700',
+      glow: 'hover:shadow-emerald-500/40',
+      border: 'hover:border-emerald-400',
     },
     {
       id: 'secretariat',
       label: 'Secrétariat',
       icon: Users,
-      description: 'Gestion administrative',
-      color: 'from-amber-600 to-amber-800',
-      hoverColor: 'hover:from-amber-700 hover:to-amber-900',
+      description: 'Gestion administrative complète',
+      color: 'from-amber-500 to-amber-700',
+      glow: 'hover:shadow-amber-500/40',
+      border: 'hover:border-amber-400',
     },
     {
       id: 'admin',
-      label: 'Admin',
+      label: 'Administrateur',
       icon: Key,
-      description: 'Administration système',
-      color: 'from-red-600 to-red-800',
-      hoverColor: 'hover:from-red-700 hover:to-red-900',
+      description: 'Accès complet au système',
+      color: 'from-red-500 to-red-700',
+      glow: 'hover:shadow-red-500/40',
+      border: 'hover:border-red-400',
     },
   ];
 
   return (
-    <div className="relative min-h-screen bg-cover bg-center bg-fixed"
-      style={{
-        backgroundImage: `url('/Capture_d\'ecran_2026-01-13_182348.png')`,
-      }}
-    >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40"></div>
+    <div className="relative min-h-screen overflow-hidden">
 
-      {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
-            Bull ASUR
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-100 drop-shadow-md">
-            Gestion des Bulletins de Notes
-          </p>
+      {/* ── Arrière-plan ── */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${accueilBg})` }}
+      />
+      {/* Overlay sombre */}
+      <div className="absolute inset-0 bg-black/55" />
+      {/* Dégradé haut/bas */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/50 pointer-events-none" />
+
+      {/* ── Header ── */}
+      <header className="relative z-20 flex items-center justify-between px-6 md:px-12 py-4">
+        {/* Titre gauche */}
+        <div>
+          <p className="text-white font-bold text-xl tracking-wide drop-shadow">Bull ASUR</p>
         </div>
 
-        {/* Role Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
-          {roles.map(({ id, label, icon: Icon, description, color, hoverColor }) => (
+        {/* Logo Bull ASUR à droite */}
+        <img
+          src={logoBullAsur}
+          alt="Logo Bull ASUR"
+          className="h-14 w-auto object-contain drop-shadow-lg"
+        />
+      </header>
+
+      {/* ── Contenu principal ── */}
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8">
+
+        {/* Titre */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white drop-shadow-xl tracking-tight">
+            Gestion des Bulletins
+          </h1>
+          <p className="mt-3 text-lg md:text-xl text-white/80 drop-shadow">
+            Licence Professionnelle ASUR — Administration et Sécurité des Réseaux
+          </p>
+          <div className="mt-5 w-24 h-1 bg-white/40 rounded-full mx-auto" />
+        </div>
+
+        {/* Cartes de connexion */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full max-w-5xl">
+          {roles.map(({ id, label, icon: Icon, description, color, glow, border }) => (
             <button
               key={id}
               onClick={() => navigate(`/login/${id}`)}
-              className={`group relative backdrop-blur-sm bg-white/10 border border-white/20 rounded-2xl p-6 md:p-8 transition-all duration-300 transform hover:scale-105 hover:bg-white/20 hover:border-white/40 shadow-lg ${hoverColor}`}
+              className={`
+                group relative flex flex-col items-center text-center
+                bg-white/10 backdrop-blur-md
+                border border-white/20 ${border}
+                rounded-2xl p-7
+                shadow-lg hover:shadow-2xl ${glow}
+                transition-all duration-300 hover:scale-105 hover:bg-white/15
+              `}
             >
-              {/* Gradient background on hover */}
-              <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${color} opacity-0 group-hover:opacity-20 transition-opacity duration-300 -z-10`}></div>
-
-              {/* Content */}
-              <div className="flex flex-col items-center text-center space-y-3">
-                <div className="p-3 rounded-full bg-white/20 group-hover:bg-white/30 transition-all duration-300">
-                  <Icon className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg md:text-xl font-semibold text-white drop-shadow-md">
-                    {label}
-                  </h3>
-                  <p className="text-sm text-gray-100 mt-1 drop-shadow-sm">
-                    {description}
-                  </p>
-                </div>
-                <div className="pt-2">
-                  <span className="inline-block px-3 py-1 bg-white/20 text-white text-xs font-medium rounded-full group-hover:bg-white/30 transition-all duration-300">
-                    Se connecter
-                  </span>
-                </div>
+              {/* Icône */}
+              <div className={`
+                w-16 h-16 rounded-2xl mb-4
+                bg-gradient-to-br ${color}
+                flex items-center justify-center
+                shadow-md group-hover:scale-110 transition-transform duration-300
+              `}>
+                <Icon className="w-8 h-8 text-white" />
               </div>
+
+              <h3 className="text-lg font-bold text-white drop-shadow mb-1">
+                {label}
+              </h3>
+              <p className="text-sm text-white/70 leading-snug mb-4">
+                {description}
+              </p>
+
+              <span className="mt-auto px-4 py-1.5 rounded-full text-xs font-semibold bg-white/20 text-white group-hover:bg-white/30 transition-colors duration-300">
+                Se connecter →
+              </span>
             </button>
           ))}
         </div>
 
         {/* Footer */}
-        <div className="mt-12 md:mt-16 text-center">
-          <p className="text-gray-100 text-sm drop-shadow-md">
-            © 2026 INPTIC - Licence Professionnelle ASUR
-          </p>
-        </div>
-      </div>
-
-      {/* Gradient Overlay for better text visibility */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none"></div>
+        <p className="mt-14 text-white/50 text-xs text-center">
+          © 2026 INPTIC — Tous droits réservés
+        </p>
+      </main>
     </div>
   );
 };

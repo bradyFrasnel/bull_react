@@ -171,7 +171,7 @@ export const DashboardAdmin: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Tableau de Bord</h1>
           <p className="text-gray-600 mt-1">
-            Vue d'ensemble — {isAdmin ? 'Administrateur' : 'Secrétariat'}
+            Attension : vous êtes connecté en tant qu'administrateur, toutes actions effectuées peut être decisive .
           </p>
         </div>
 

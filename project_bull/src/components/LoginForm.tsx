@@ -176,35 +176,6 @@ export const LoginForm: React.FC = () => {
               {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
               {isSubmitting ? 'Connexion...' : 'Se connecter'}
             </button>
-
-            {/* Test Credentials Info */}
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-600 mb-2 font-semibold">Identifiants de test :</p>
-              {role === 'etudiant' && (
-                <p className="text-xs text-gray-600">
-                  <span className="font-semibold">ID :</span> mmartin2024<br />
-                  <span className="font-semibold">MDP :</span> password123
-                </p>
-              )}
-              {role === 'enseignant' && (
-                <p className="text-xs text-gray-600">
-                  <span className="font-semibold">ID :</span> jdupontweb<br />
-                  <span className="font-semibold">MDP :</span> password123
-                </p>
-              )}
-              {role === 'secretariat' && (
-                <p className="text-xs text-gray-600">
-                  <span className="font-semibold">ID :</span> admin<br />
-                  <span className="font-semibold">MDP :</span> admin
-                </p>
-              )}
-              {role === 'admin' && (
-                <p className="text-xs text-gray-600">
-                  <span className="font-semibold">ID :</span> root<br />
-                  <span className="font-semibold">MDP :</span> BradyRoot1
-                </p>
-              )}
-            </div>
           </form>
 
           {/* Footer Link */}
