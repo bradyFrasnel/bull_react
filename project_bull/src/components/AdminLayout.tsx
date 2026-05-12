@@ -11,7 +11,11 @@ import {
   GraduationCap,
   ChevronDown,
   Home,
+  Edit,
+  Clock,
+  Calculator,
 } from 'lucide-react';
+import { AppBar } from './AppBar';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -65,17 +69,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       label: 'Saisir Notes',
-      icon: FileText,
+      icon: Edit,
       path: `${basePath}/saisir-notes`,
     },
     {
       label: 'Absences',
-      icon: FileText,
+      icon: Clock,
       path: `${basePath}/absences`,
     },
     {
       label: 'Calculs & Validation',
-      icon: FileText,
+      icon: Calculator,
       path: `${basePath}/calculs`,
     },
     {
@@ -99,23 +103,23 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         } bg-gradient-to-b from-gray-900 to-gray-800 text-white transition-all duration-300 flex flex-col shadow-xl`}
       >
         {/* Logo/Header */}
-        <div className="h-20 flex items-center justify-between px-6 border-b border-gray-700">
+        <div className="h-24 flex items-center justify-between px-4 border-b border-gray-700">
           {sidebarOpen && (
             <div>
-              <h1 className="text-xl font-bold">Bull ASUR</h1>
+              <h1 className="text-base font-bold">Bull ASUR</h1>
               <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
             </div>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-gray-700 rounded-lg transition-colors"
           >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {navigationItems.map((item) => (
             <div key={item.label}>
               {item.submenu ? (
@@ -124,31 +128,31 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     onClick={() =>
                       setExpandedMenu(expandedMenu === item.label ? null : item.label)
                     }
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
                       expandedMenu === item.label
                         ? 'bg-blue-600 text-white'
                         : 'hover:bg-gray-700 text-gray-300'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5" />
-                      {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
+                    <div className="flex items-center gap-2.5">
+                      <item.icon className="w-4 h-4 flex-shrink-0" />
+                      {sidebarOpen && <span className="text-xs font-medium">{item.label}</span>}
                     </div>
                     {sidebarOpen && (
                       <ChevronDown
-                        className={`w-4 h-4 transition-transform ${
+                        className={`w-3 h-3 transition-transform ${
                           expandedMenu === item.label ? 'rotate-180' : ''
                         }`}
                       />
                     )}
                   </button>
                   {sidebarOpen && expandedMenu === item.label && (
-                    <div className="ml-4 space-y-1 mt-2">
+                    <div className="ml-3 space-y-0.5 mt-1">
                       {item.submenu.map((subitem) => (
                         <button
                           key={subitem.path}
                           onClick={() => navigate(subitem.path)}
-                          className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-all ${
+                          className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-all ${
                             isActive(subitem.path)
                               ? 'bg-blue-500 text-white'
                               : 'text-gray-400 hover:text-white hover:bg-gray-700'
@@ -163,14 +167,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               ) : (
                 <button
                   onClick={() => navigate(item.path!)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all ${
                     isActive(item.path || '')
                       ? 'bg-blue-600 text-white'
                       : 'hover:bg-gray-700 text-gray-300'
                   }`}
                 >
-                  <item.icon className="w-5 h-5" />
-                  {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
+                  <item.icon className="w-4 h-4 flex-shrink-0" />
+                  {sidebarOpen && <span className="text-xs font-medium">{item.label}</span>}
                 </button>
               )}
             </div>
@@ -178,26 +182,27 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </nav>
 
         {/* User Section */}
-        <div className="border-t border-gray-700 p-4 space-y-3">
+        <div className="border-t border-gray-700 p-3 space-y-2">
           {sidebarOpen && (
             <div className="px-2 py-2 bg-gray-700 rounded-lg">
-              <p className="text-sm font-medium truncate">{user?.prenom || user?.nom}</p>
-              <p className="text-xs text-gray-400">{user?.email}</p>
+              <p className="text-xs font-medium truncate">{user?.prenom || user?.nom}</p>
+              <p className="text-xs text-gray-400 truncate">{user?.email}</p>
             </div>
           )}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-gray-300 hover:text-white"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-gray-300 hover:text-white"
           >
-            <LogOut className="w-5 h-5" />
-            {sidebarOpen && <span className="text-sm font-medium">Déconnexion</span>}
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            {sidebarOpen && <span className="text-xs font-medium">Déconnexion</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">{children}</div>
+      <main className="flex-1 overflow-auto flex flex-col">
+        <AppBar sidebarOpen={sidebarOpen} bgColor="#111827" />
+        <div className="flex-1 overflow-auto p-6">{children}</div>
       </main>
     </div>
   );

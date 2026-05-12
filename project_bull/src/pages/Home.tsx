@@ -70,7 +70,7 @@ export const Home: React.FC = () => {
         <img
           src={logoBullAsur}
           alt="Logo Bull ASUR"
-          className="h-14 w-auto object-contain drop-shadow-lg"
+          className="h-40 w-auto object-contain drop-shadow-lg"
         />
       </header>
 
