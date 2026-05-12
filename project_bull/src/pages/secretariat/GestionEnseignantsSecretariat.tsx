@@ -73,7 +73,7 @@ export const GestionEnseignantsSecretariat: React.FC = () => {
     try {
       setSubmitting(true);
       setError('');
-      await api.post('/enseignants', formData);
+      await api.post('/auth/admin/create-enseignant', formData);
       setFormData(EMPTY_FORM);
       setShowModal(false);
       await fetchTeachers();
@@ -186,10 +186,14 @@ export const GestionEnseignantsSecretariat: React.FC = () => {
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nom (identifiant de connexion) *
+                  </label>
                   <input type="text" required value={formData.nom}
                     onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                    placeholder="Ex: martin2024"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                  <p className="text-xs text-gray-500 mt-1">Identifiant de connexion</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>

@@ -365,7 +365,7 @@ export const ConsulterEtudiants: React.FC = () => {
                   <div>
                     <span className="text-gray-600">BAC:</span>
                     <p className="font-medium">
-                      {selectedEtudiant.bac_type} - {selectedEtudiant.annee_bac} ({selectedEtudiant.mention_bac})
+                      {selectedEtudiant.bac_type} - {selectedEtudiant.annee_bac}
                     </p>
                   </div>
                 </div>

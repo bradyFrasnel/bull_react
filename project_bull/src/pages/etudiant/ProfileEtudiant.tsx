@@ -9,8 +9,6 @@ import {
   MapPin,
   Calendar,
   GraduationCap,
-  Phone,
-  Home,
   Key,
   Save,
   AlertCircle,
@@ -168,12 +166,6 @@ export const ProfileEtudiant: React.FC = () => {
                   <Mail className="w-4 h-4" />
                   <span className="truncate">{etudiant.utilisateur?.email}</span>
                 </div>
-                {etudiant.telephone && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="w-4 h-4" />
-                    <span>{etudiant.telephone}</span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -197,10 +189,6 @@ export const ProfileEtudiant: React.FC = () => {
                     : undefined)}
                 {infoRow(<MapPin className="w-4 h-4" />, 'Lieu de naissance',
                   etudiant.lieu_naissance)}
-                {etudiant.adresse && infoRow(
-                  <Home className="w-4 h-4" />, 'Adresse', etudiant.adresse)}
-                {etudiant.telephone && infoRow(
-                  <Phone className="w-4 h-4" />, 'Téléphone', etudiant.telephone)}
               </div>
             </div>
 
@@ -215,8 +203,8 @@ export const ProfileEtudiant: React.FC = () => {
                 {infoRow(<GraduationCap className="w-4 h-4" />, 'Type de BAC', etudiant.bac_type)}
                 {infoRow(<Calendar className="w-4 h-4" />, 'Année du BAC',
                   etudiant.annee_bac?.toString())}
-                {infoRow(<GraduationCap className="w-4 h-4" />, 'Mention BAC',
-                  etudiant.mention_bac)}
+                {infoRow(<MapPin className="w-4 h-4" />, 'Provenance',
+                  etudiant.provenance)}
               </div>
               <p className="mt-4 text-sm text-gray-500">
                 Pour modifier ces informations, contactez le secrétariat pédagogique.

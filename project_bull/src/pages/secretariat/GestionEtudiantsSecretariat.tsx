@@ -1,3 +1,4 @@
+// Même logique que GestionEtudiants admin — modèle étudiant mis à jour
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { api } from '../../services/api';
@@ -5,12 +6,15 @@ import { Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2 } from 'lucide-
 
 interface Student {
   id: string;
+  utilisateurId: string;
   prenom: string;
   matricule: string;
-  utilisateur?: {
-    email: string;
-    nom: string;
-  };
+  date_naissance?: string;
+  lieu_naissance?: string;
+  bac_type?: string;
+  annee_bac?: number;
+  provenance?: string;
+  utilisateur?: { email: string; nom: string };
 }
 
 interface CreateStudentForm {
@@ -18,89 +22,55 @@ interface CreateStudentForm {
   prenom: string;
   email: string;
   matricule: string;
-  identifiant: string;
   password: string;
   date_naissance: string;
   lieu_naissance: string;
   bac_type: string;
   annee_bac: number;
-  mention_bac: string;
-  telephone?: string;
-  adresse?: string;
+  provenance: string;
 }
+
+const EMPTY_FORM: CreateStudentForm = {
+  nom: '', prenom: '', email: '', matricule: '', password: '',
+  date_naissance: '', lieu_naissance: '', bac_type: '',
+  annee_bac: new Date().getFullYear(), provenance: '',
+};
+
+const BAC_TYPES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'STT', 'SMS', 'STI'];
 
 export const GestionEtudiantsSecretariat: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState<CreateStudentForm>({
-    nom: '',
-    prenom: '',
-    email: '',
-    matricule: '',
-    identifiant: '',
-    password: '',
-    date_naissance: '',
-    lieu_naissance: '',
-    bac_type: '',
-    annee_bac: new Date().getFullYear(),
-    mention_bac: '',
-  });
+  const [formData, setFormData] = useState<CreateStudentForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
+  useEffect(() => { fetchStudents(); }, []);
 
   const fetchStudents = async () => {
     try {
       setLoading(true);
       const response = await api.get('/etudiants');
-      setStudents(response.data || []);
-    } catch (err: any) {
+      const data = (response.data || []).map((s: any) => ({
+        ...s,
+        id: s.utilisateurId ?? s.id,
+      }));
+      setStudents(data);
+    } catch {
       setError('Erreur lors du chargement des étudiants');
-      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateStudent = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setSubmitting(true);
       setError('');
-
-      await api.post('/etudiants', {
-        nom: formData.nom,
-        prenom: formData.prenom,
-        email: formData.email,
-        matricule: formData.matricule,
-        identifiant: formData.identifiant,
-        password: formData.password,
-        date_naissance: formData.date_naissance,
-        lieu_naissance: formData.lieu_naissance,
-        bac_type: formData.bac_type,
-        annee_bac: formData.annee_bac,
-        mention_bac: formData.mention_bac,
-        telephone: formData.telephone,
-        adresse: formData.adresse,
-      });
-
-      setFormData({
-        nom: '',
-        prenom: '',
-        email: '',
-        matricule: '',
-        identifiant: '',
-        password: '',
-        date_naissance: '',
-        lieu_naissance: '',
-        bac_type: '',
-        annee_bac: new Date().getFullYear(),
-        mention_bac: '',
-      });
+      await api.post('/auth/admin/create-etudiant', formData);
+      setFormData(EMPTY_FORM);
       setShowModal(false);
       await fetchStudents();
     } catch (err: any) {
@@ -110,21 +80,19 @@ export const GestionEtudiantsSecretariat: React.FC = () => {
     }
   };
 
-  const handleDeleteStudent = async (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
-      try {
-        await api.delete(`/etudiants/${id}`);
-        await fetchStudents();
-      } catch (err: any) {
-        setError('Erreur lors de la suppression');
-      }
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Supprimer cet étudiant ?')) return;
+    try {
+      await api.delete(`/etudiants/${id}`);
+      await fetchStudents();
+    } catch {
+      setError('Erreur lors de la suppression');
     }
   };
 
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gestion des Étudiants</h1>
@@ -139,7 +107,6 @@ export const GestionEtudiantsSecretariat: React.FC = () => {
           </button>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <div className="mb-6 flex items-start gap-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -147,7 +114,6 @@ export const GestionEtudiantsSecretariat: React.FC = () => {
           </div>
         )}
 
-        {/* Students Table */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           {loading ? (
             <div className="flex justify-center items-center h-64">
@@ -162,44 +128,37 @@ export const GestionEtudiantsSecretariat: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                      Nom
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                      Prénom
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                      Email
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                      Matricule
-                    </th>
-                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
-                      Actions
-                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Nom</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Prénom</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Email</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Matricule</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">BAC</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Provenance</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {students.map((student) => (
                     <tr key={student.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                        {student.utilisateur?.nom}
-                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{student.utilisateur?.nom}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{student.prenom}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {student.utilisateur?.email}
-                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{student.utilisateur?.email}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{student.matricule}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {student.bac_type && (
+                          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                            {student.bac_type} {student.annee_bac}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{student.provenance || '—'}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => {}}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
+                          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteStudent(student.id)}
+                            onClick={() => handleDelete(student.id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -213,193 +172,111 @@ export const GestionEtudiantsSecretariat: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Ajouter un étudiant</h2>
-
-              <form onSubmit={handleCreateStudent} className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.nom}
-                    onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.prenom}
-                    onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Matricule *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.matricule}
-                    onChange={(e) => setFormData({ ...formData, matricule: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Identifiant *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.identifiant}
-                    onChange={(e) => setFormData({ ...formData, identifiant: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mot de passe *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date de naissance *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.date_naissance}
-                    onChange={(e) => setFormData({ ...formData, date_naissance: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Lieu de naissance *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.lieu_naissance}
-                    onChange={(e) => setFormData({ ...formData, lieu_naissance: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Type de BAC *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.bac_type}
-                    onChange={(e) => setFormData({ ...formData, bac_type: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Année BAC *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.annee_bac}
-                    onChange={(e) => setFormData({ ...formData, annee_bac: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mention BAC *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.mention_bac}
-                    onChange={(e) => setFormData({ ...formData, mention_bac: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-                  <input
-                    type="tel"
-                    value={formData.telephone}
-                    onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-                  <input
-                    type="text"
-                    value={formData.adresse}
-                    onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="col-span-2 flex gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                  >
-                    {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Créer
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Ajouter un étudiant</h2>
+
+            <form onSubmit={handleCreate} className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nom (identifiant de connexion) *
+                </label>
+                <input type="text" required value={formData.nom}
+                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                  placeholder="Ex: dupont2024"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+                <p className="text-xs text-gray-500 mt-1">Sera utilisé comme identifiant de connexion</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
+                <input type="text" required value={formData.prenom}
+                  onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input type="email" required value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Matricule *</label>
+                <input type="text" required value={formData.matricule}
+                  onChange={(e) => setFormData({ ...formData, matricule: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe *</label>
+                <input type="password" required value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date de naissance *</label>
+                <input type="date" required value={formData.date_naissance}
+                  onChange={(e) => setFormData({ ...formData, date_naissance: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Lieu de naissance *</label>
+                <input type="text" required value={formData.lieu_naissance}
+                  onChange={(e) => setFormData({ ...formData, lieu_naissance: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Type de BAC *</label>
+                <select required value={formData.bac_type}
+                  onChange={(e) => setFormData({ ...formData, bac_type: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
+                  <option value="">Sélectionner un type</option>
+                  {BAC_TYPES.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Année BAC *</label>
+                <input type="number" required value={formData.annee_bac}
+                  onChange={(e) => setFormData({ ...formData, annee_bac: parseInt(e.target.value) })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Provenance (établissement d'origine) *
+                </label>
+                <input type="text" required value={formData.provenance}
+                  onChange={(e) => setFormData({ ...formData, provenance: e.target.value })}
+                  placeholder="Ex: Lycée Omar Bongo, Libreville"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+              </div>
+
+              <div className="col-span-2 flex gap-3 pt-4">
+                <button type="button"
+                  onClick={() => { setShowModal(false); setFormData(EMPTY_FORM); setError(''); }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                  Annuler
+                </button>
+                <button type="submit" disabled={submitting}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Créer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };

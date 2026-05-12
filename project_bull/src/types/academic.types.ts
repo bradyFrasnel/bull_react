@@ -44,9 +44,7 @@ export interface Etudiant {
   lieu_naissance: string;
   bac_type: string;
   annee_bac: number;
-  mention_bac: string;
-  telephone?: string;
-  adresse?: string;
+  provenance: string;   // établissement/ville d'origine
   createdAt?: string;
   updatedAt?: string;
   utilisateur?: {
@@ -99,15 +97,12 @@ export interface CreateEtudiantForm {
   prenom: string;
   email: string;
   matricule: string;
-  identifiant: string;
   password: string;
   date_naissance: string;
   lieu_naissance: string;
   bac_type: string;
   annee_bac: number;
-  mention_bac: string;
-  telephone?: string;
-  adresse?: string;
+  provenance: string;
 }
 
 export interface CreateEnseignantForm {
