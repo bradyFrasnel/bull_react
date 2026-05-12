@@ -28,6 +28,7 @@ import { ProfileEtudiant } from './pages/etudiant/ProfileEtudiant';
 import { SaisirNotes as SaisirNotesAdmin } from './pages/admin/SaisirNotes';
 import { GestionAbsences } from './pages/admin/GestionAbsences';
 import { CalculsValidation } from './pages/admin/CalculsValidation';
+import { GestionBulletins } from './pages/admin/GestionBulletins';
 // Pages Secrétariat supplémentaires
 import { SaisirNotes as SaisirNotesSecretariat } from './pages/secretariat/SaisirNotes';
 import { GestionAbsences as GestionAbsencesSecretariat } from './pages/secretariat/GestionAbsences';
@@ -85,7 +86,7 @@ function App() {
             path="/admin/bulletins"
             element={
               <ProtectedRoute requiredRole="admin">
-                <DashboardAdmin />
+                <GestionBulletins />
               </ProtectedRoute>
             }
           />
@@ -193,7 +194,7 @@ function App() {
             path="/secretariat/bulletins"
             element={
               <ProtectedRoute requiredRole="secretariat">
-                <DashboardSecretariat />
+                <GestionBulletins />
               </ProtectedRoute>
             }
           />
@@ -218,6 +219,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="secretariat">
                 <GestionAbsencesSecretariat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/secretariat/calculs"
+            element={
+              <ProtectedRoute requiredRole="secretariat">
+                <CalculsValidation />
               </ProtectedRoute>
             }
           />

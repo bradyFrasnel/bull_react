@@ -10,7 +10,6 @@ import {
   AlertCircle,
   Loader2,
   Edit,
-  Clock,
   Calculator,
 } from 'lucide-react';
 import {
@@ -123,44 +122,37 @@ export const DashboardAdmin: React.FC = () => {
 
   const quickActions = [
     {
-      label: 'Saisir des Notes',
-      description: 'Enregistrer les évaluations CC, Examen, Rattrapage',
+      label: 'Notes & Absences',
+      description: 'Saisir les évaluations et gérer les absences',
       icon: Edit,
       color: 'blue',
       bg: 'bg-blue-100',
       text: 'text-blue-600',
       border: 'hover:border-blue-400',
       action: () => navigate(`${basePath}/saisir-notes`),
+      badge: null,
     },
     {
-      label: 'Gérer les Absences',
-      description: 'Enregistrer et suivre les absences des étudiants',
-      icon: Clock,
-      color: 'amber',
-      bg: 'bg-amber-100',
-      text: 'text-amber-600',
-      border: 'hover:border-amber-400',
-      action: () => navigate(`${basePath}/absences`),
-    },
-    {
-      label: 'Calculs & Validation',
-      description: 'Calculer les moyennes et valider les semestres',
+      label: 'Référentiel & Calculs',
+      description: 'Semestres, UE, matières et validation des moyennes',
       icon: Calculator,
       color: 'green',
       bg: 'bg-green-100',
       text: 'text-green-600',
       border: 'hover:border-green-400',
-      action: () => navigate(isAdmin ? ROUTES.ADMIN_CALCULS : `${basePath}/calculs`),
+      action: () => navigate(`${basePath}/academique`),
+      badge: null,
     },
     {
-      label: 'Gestion Académique',
-      description: 'Gérer les semestres, UE et matières',
-      icon: TrendingUp,
-      color: 'purple',
-      bg: 'bg-purple-100',
-      text: 'text-purple-600',
-      border: 'hover:border-purple-400',
-      action: () => navigate(`${basePath}/academique`),
+      label: 'Bulletins',
+      description: 'Générer et imprimer les bulletins de la promotion',
+      icon: FileText,
+      color: 'indigo',
+      bg: 'bg-indigo-100',
+      text: 'text-indigo-600',
+      border: 'hover:border-indigo-400',
+      action: () => navigate(`${basePath}/bulletins`),
+      badge: null,
     },
   ];
 
@@ -214,7 +206,7 @@ export const DashboardAdmin: React.FC = () => {
         {/* Actions rapides */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Actions Rapides</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {quickActions.map((action) => {
               const Icon = action.icon;
               return (
@@ -231,6 +223,28 @@ export const DashboardAdmin: React.FC = () => {
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* Liens rapides secondaires */}
+        <div className="mb-8 bg-white rounded-xl shadow-md p-5">
+          <h2 className="text-base font-bold text-gray-900 mb-3">Accès Directs</h2>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: 'Saisir Notes', path: `${basePath}/saisir-notes`, color: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
+              { label: 'Absences', path: `${basePath}/absences`, color: 'bg-amber-50 text-amber-700 hover:bg-amber-100' },
+              { label: 'Calculs & Validation', path: isAdmin ? ROUTES.ADMIN_CALCULS : `${basePath}/calculs`, color: 'bg-green-50 text-green-700 hover:bg-green-100' },
+              { label: 'Semestres', path: `${basePath}/academique`, color: 'bg-purple-50 text-purple-700 hover:bg-purple-100' },
+              { label: 'UE & Matières', path: `${basePath}/academique`, color: 'bg-purple-50 text-purple-700 hover:bg-purple-100' },
+            ].map(({ label, path, color }) => (
+              <button
+                key={label}
+                onClick={() => navigate(path)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${color}`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 

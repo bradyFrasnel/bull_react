@@ -46,6 +46,34 @@ export const evaluationService = {
     return response.data;
   },
 
+  // ── Nouveaux endpoints relevé en masse ──────────────────────────────────
+
+  /**
+   * GET /evaluations/releve/matiere/:matiereId
+   * Retourne toute la classe avec leurs notes pour une matière
+   */
+  async getReleve(matiereId: string): Promise<any> {
+    const response = await api.get(`/evaluations/releve/matiere/${matiereId}`);
+    return response.data;
+  },
+
+  /**
+   * PUT /evaluations/releve/matiere/:matiereId
+   * Sauvegarder toutes les notes de la classe en une seule requête
+   */
+  async saveReleve(matiereId: string, saisiePar: string, notes: {
+    utilisateurId: string;
+    noteCC?: number | null;
+    noteExamen?: number | null;
+    noteRattrapage?: number | null;
+  }[]): Promise<any> {
+    const response = await api.put(`/evaluations/releve/matiere/${matiereId}`, {
+      saisiePar,
+      notes,
+    });
+    return response.data;
+  },
+
   async create(data: CreateEvaluationForm): Promise<Evaluation> {
     const response = await api.post('/evaluations', data);
     return response.data;

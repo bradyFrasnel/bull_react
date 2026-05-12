@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { EtudiantLayout } from '../../components/EtudiantLayout';
 import {
@@ -10,65 +10,32 @@ import {
   resultatAnnuelService,
 } from '../../services';
 import { bulletinService } from '../../services/bulletin.service';
+import { AlertCircle, Loader2, Printer, Download } from 'lucide-react';
+import { Etudiant, Semestre } from '../../types';
 import {
-  FileText,
-  Download,
-  AlertCircle,
-  Loader2,
-  ArrowLeft,
-  CheckCircle,
-  XCircle,
-  Award,
-  Printer,
-} from 'lucide-react';
-import {
-  Etudiant,
-  Semestre,
-  ResultatSemestre,
-  ResultatAnnuel,
-} from '../../types';
+  BulletinDocument,
+  BulletinData,
+  BulletinSemestreData,
+  BulletinAnnuelData,
+  UEData,
+} from '../../components/BulletinDocument';
 
 type BulletinType = 'semestre' | 'annuel';
 
-interface MatiereRow {
-  libelle: string;
-  coefficient: number;
-  credits: number;
-  cc?: number;
-  examen?: number;
-  rattrapage?: number;
-  moyenne?: number;
-}
-
-interface UERow {
-  code: string;
-  libelle: string;
-  matieres: MatiereRow[];
-  moyenne?: number;
-  creditsTotal: number;
-  creditsAcquis: number;
-  acquise: boolean;
-}
-
 export const Bulletins: React.FC = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
 
   const [etudiant, setEtudiant] = useState<Etudiant | null>(null);
   const [semestres, setSemestres] = useState<Semestre[]>([]);
-  const [selectedSemestre, setSelectedSemestre] = useState<string>('');
+  const [selectedSemestre, setSelectedSemestre] = useState('');
   const [bulletinType, setBulletinType] = useState<BulletinType>('semestre');
-  const [uesData, setUesData] = useState<UERow[]>([]);
-  const [resultat, setResultat] = useState<ResultatSemestre | null>(null);
-  const [resultatAnnuel, setResultatAnnuel] = useState<ResultatAnnuel | null>(null);
+  const [bulletinData, setBulletinData] = useState<BulletinData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingBulletin, setLoadingBulletin] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchInitialData();
-  }, [user]);
+  useEffect(() => { fetchInitialData(); }, [user]);
 
   useEffect(() => {
     const state = location.state as { semestreId?: string };
@@ -77,13 +44,13 @@ export const Bulletins: React.FC = () => {
 
   useEffect(() => {
     if (selectedSemestre && etudiant && bulletinType === 'semestre') {
-      fetchBulletinSemestre();
+      buildBulletinSemestre();
     }
   }, [selectedSemestre, etudiant, bulletinType]);
 
   useEffect(() => {
     if (etudiant && bulletinType === 'annuel') {
-      fetchBulletinAnnuel();
+      buildBulletinAnnuel();
     }
   }, [etudiant, bulletinType]);
 
@@ -91,9 +58,11 @@ export const Bulletins: React.FC = () => {
     if (!user?.id) return;
     try {
       setLoading(true);
-      const etudiantData = await etudiantService.getByUserId(user.id);
+      const [etudiantData, semestresData] = await Promise.all([
+        etudiantService.getByUserId(user.id),
+        semestreService.getAll(),
+      ]);
       setEtudiant(etudiantData);
-      const semestresData = await semestreService.getAll();
       setSemestres(semestresData);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erreur lors du chargement');
@@ -102,63 +71,81 @@ export const Bulletins: React.FC = () => {
     }
   };
 
-  const fetchBulletinSemestre = async () => {
+  // ── Construire le bulletin semestre ──────────────────────────────────────────
+  const buildBulletinSemestre = async () => {
     if (!etudiant || !selectedSemestre) return;
     try {
       setLoadingBulletin(true);
       setError('');
+      setBulletinData(null);
 
-      // Utiliser l'endpoint bulletin agrégé du backend
-      // Réponse : { etudiant, semestre, ues[{ code, libelle, creditsTotal, moyenne, creditsAcquis, acquise, compensee, matieres[{ libelle, coefficient, credits, noteCC, noteExamen, noteRattrapage, moyenne, absences }] }], resultat, statistiques }
+      const semestre = semestres.find(s => s.id === selectedSemestre);
+
+      // 1. Essayer l'endpoint agrégé du backend
       try {
-        const bulletinData = await bulletinService.getBulletinSemestre(
-          etudiant.id,
-          selectedSemestre
-        );
-
-        if (bulletinData?.ues) {
-          // Mapper la réponse backend vers notre structure UERow
-          const ues: UERow[] = bulletinData.ues.map((ue: any) => ({
-            code: ue.code,
-            libelle: ue.libelle,
-            matieres: (ue.matieres || []).map((m: any) => ({
-              libelle: m.libelle,
-              coefficient: m.coefficient,
-              credits: m.credits,
-              cc: m.noteCC,
-              examen: m.noteExamen,
-              rattrapage: m.noteRattrapage,
-              moyenne: m.moyenne,
+        const raw = await bulletinService.getBulletinSemestre(etudiant.id, selectedSemestre);
+        if (raw?.ues) {
+          const data: BulletinSemestreData = {
+            type: 'semestre',
+            etudiant: {
+              nom: raw.etudiant?.nom ?? etudiant.utilisateur?.nom ?? '',
+              prenom: raw.etudiant?.prenom ?? etudiant.prenom,
+              matricule: raw.etudiant?.matricule ?? etudiant.matricule,
+              dateNaissance: raw.etudiant?.dateNaissance ?? etudiant.date_naissance,
+              lieuNaissance: raw.etudiant?.lieuNaissance ?? etudiant.lieu_naissance,
+            },
+            semestre: {
+              code: raw.semestre?.code ?? semestre?.code ?? '',
+              libelle: raw.semestre?.libelle ?? semestre?.libelle ?? '',
+              anneeUniversitaire: raw.semestre?.anneeUniversitaire ?? semestre?.anneeUniversitaire ?? '',
+            },
+            ues: raw.ues.map((ue: any): UEData => ({
+              code: ue.code,
+              libelle: ue.libelle,
+              matieres: (ue.matieres || []).map((m: any) => ({
+                libelle: m.libelle,
+                coefficient: m.coefficient,
+                credits: m.credits,
+                cc: m.noteCC,
+                examen: m.noteExamen,
+                rattrapage: m.noteRattrapage,
+                moyenne: m.moyenne,
+                absences: m.absences,
+              })),
+              moyenne: ue.moyenne,
+              creditsTotal: ue.creditsTotal,
+              creditsAcquis: ue.creditsAcquis ?? 0,
+              acquise: ue.acquise ?? false,
+              compense: ue.compensee ?? false,
             })),
-            moyenne: ue.moyenne,
-            creditsTotal: ue.creditsTotal,
-            creditsAcquis: ue.creditsAcquis ?? 0,
-            acquise: ue.acquise ?? false,
-          }));
-          setUesData(ues);
-
-          if (bulletinData.resultat) setResultat(bulletinData.resultat);
+            moyenneSemestre: raw.resultat?.moyenneSemestre,
+            creditsTotal: raw.resultat?.creditsTotal ?? 30,
+            creditsAcquis: raw.resultat?.creditsAcquis ?? 0,
+            valide: raw.resultat?.valide,
+            statistiques: raw.statistiques ? {
+              moyenneClasse: raw.statistiques.moyenneClasse,
+              min: raw.statistiques.noteMin,
+              max: raw.statistiques.noteMax,
+              ecartType: raw.statistiques.ecartType,
+              nbEtudiants: raw.statistiques.nbEtudiants,
+            } : undefined,
+          };
+          setBulletinData(data);
           return;
         }
-      } catch {
-        // Fallback : construire depuis les évaluations brutes
-      }
+      } catch { /* fallback */ }
 
-      // Fallback : construire depuis les évaluations brutes
-      const semestre = await semestreService.getById(selectedSemestre);
+      // 2. Fallback : construire depuis les évaluations brutes
+      const semestreDetail = await semestreService.getById(selectedSemestre);
       const evaluations = await evaluationService.getByEtudiant(etudiant.id);
 
+      let resultat = null;
       try {
-        const res = await resultatSemestreService.getByEtudiantAndSemestre(
-          etudiant.id, selectedSemestre
-        );
-        setResultat(res);
-      } catch {
-        setResultat(null);
-      }
+        resultat = await resultatSemestreService.getByEtudiantAndSemestre(etudiant.id, selectedSemestre);
+      } catch { /* pas de résultat calculé */ }
 
-      const ues: UERow[] = (semestre.ues || []).map((ue) => {
-        const matieres: MatiereRow[] = (ue.matieres || []).map((matiere) => {
+      const ues: UEData[] = (semestreDetail.ues || []).map((ue) => {
+        const matieres = (ue.matieres || []).map((matiere) => {
           const evals = evaluations.filter(e => e.matiereId === matiere.id);
           const cc = evals.find(e => e.type === 'CC')?.note;
           const examen = evals.find(e => e.type === 'EXAMEN')?.note;
@@ -185,7 +172,27 @@ export const Bulletins: React.FC = () => {
         return { code: ue.code, libelle: ue.libelle, matieres, moyenne: moyenneUE, creditsTotal, creditsAcquis: acquise ? creditsTotal : 0, acquise };
       });
 
-      setUesData(ues);
+      const data: BulletinSemestreData = {
+        type: 'semestre',
+        etudiant: {
+          nom: etudiant.utilisateur?.nom ?? '',
+          prenom: etudiant.prenom,
+          matricule: etudiant.matricule,
+          dateNaissance: etudiant.date_naissance,
+          lieuNaissance: etudiant.lieu_naissance,
+        },
+        semestre: {
+          code: semestreDetail.code,
+          libelle: semestreDetail.libelle,
+          anneeUniversitaire: semestreDetail.anneeUniversitaire,
+        },
+        ues,
+        moyenneSemestre: resultat?.moyenneSemestre,
+        creditsTotal: resultat?.creditsTotal ?? 30,
+        creditsAcquis: resultat?.creditsAcquis ?? 0,
+        valide: resultat?.valide,
+      };
+      setBulletinData(data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erreur lors du chargement du bulletin');
     } finally {
@@ -193,144 +200,142 @@ export const Bulletins: React.FC = () => {
     }
   };
 
-  const fetchBulletinAnnuel = async () => {
+  // ── Construire le bulletin annuel ─────────────────────────────────────────────
+  const buildBulletinAnnuel = async () => {
     if (!etudiant) return;
     try {
       setLoadingBulletin(true);
-      // Essayer l'endpoint bulletin annuel agrégé
+      setError('');
+      setBulletinData(null);
+
+      // 1. Essayer l'endpoint agrégé
       try {
-        const data = await bulletinService.getBulletinAnnuel(etudiant.id);
-        if (data) {
-          setResultatAnnuel(data);
+        const raw = await bulletinService.getBulletinAnnuel(etudiant.id);
+        if (raw) {
+          const data: BulletinAnnuelData = {
+            type: 'annuel',
+            etudiant: {
+              nom: raw.etudiant?.nom ?? etudiant.utilisateur?.nom ?? '',
+              prenom: raw.etudiant?.prenom ?? etudiant.prenom,
+              matricule: raw.etudiant?.matricule ?? etudiant.matricule,
+              dateNaissance: raw.etudiant?.dateNaissance ?? etudiant.date_naissance,
+              lieuNaissance: raw.etudiant?.lieuNaissance ?? etudiant.lieu_naissance,
+              bacType: etudiant.bac_type,
+              anneeBac: etudiant.annee_bac,
+              provenance: etudiant.provenance,
+            },
+            anneeUniversitaire: raw.anneeUniversitaire ?? '',
+            semestre5: raw.semestre5,
+            semestre6: raw.semestre6,
+            moyenneAnnuelle: raw.moyenneAnnuelle,
+            creditsTotal: raw.creditsTotal ?? 60,
+            creditsAcquis: raw.creditsAcquis ?? 0,
+            decisionJury: raw.decisionJury,
+            mention: raw.mention,
+            statistiques: raw.statistiques,
+          };
+          setBulletinData(data);
           return;
         }
-      } catch {
-        // Fallback sur les résultats annuels
-      }
+      } catch { /* fallback */ }
+
+      // 2. Fallback : résultats annuels
       const annuels = await resultatAnnuelService.getByEtudiant(etudiant.id);
-      if (annuels.length > 0) setResultatAnnuel(annuels[0]);
-      else setResultatAnnuel(null);
+      if (annuels.length > 0) {
+        const r = annuels[0];
+        const data: BulletinAnnuelData = {
+          type: 'annuel',
+          etudiant: {
+            nom: etudiant.utilisateur?.nom ?? '',
+            prenom: etudiant.prenom,
+            matricule: etudiant.matricule,
+            dateNaissance: etudiant.date_naissance,
+            lieuNaissance: etudiant.lieu_naissance,
+            bacType: etudiant.bac_type,
+            anneeBac: etudiant.annee_bac,
+            provenance: etudiant.provenance,
+          },
+          anneeUniversitaire: r.anneeUniversitaire ?? '',
+          semestre5: r.resultatS5 ? {
+            libelle: r.resultatS5.semestre?.libelle ?? 'Semestre 5',
+            moyenne: r.resultatS5.moyenneSemestre,
+            creditsAcquis: r.resultatS5.creditsAcquis ?? 0,
+            creditsTotal: r.resultatS5.creditsTotal ?? 30,
+            valide: r.resultatS5.valide ?? false,
+          } : undefined,
+          semestre6: r.resultatS6 ? {
+            libelle: r.resultatS6.semestre?.libelle ?? 'Semestre 6',
+            moyenne: r.resultatS6.moyenneSemestre,
+            creditsAcquis: r.resultatS6.creditsAcquis ?? 0,
+            creditsTotal: r.resultatS6.creditsTotal ?? 30,
+            valide: r.resultatS6.valide ?? false,
+          } : undefined,
+          moyenneAnnuelle: r.moyenneAnnuelle,
+          creditsTotal: r.creditsTotal ?? 60,
+          creditsAcquis: r.creditsAcquis ?? 0,
+          decisionJury: r.decisionJury,
+          mention: r.mention,
+        };
+        setBulletinData(data);
+      }
     } catch {
-      setResultatAnnuel(null);
+      setBulletinData(null);
     } finally {
       setLoadingBulletin(false);
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const getMentionLabel = (mention?: string) => {
-    const labels: Record<string, string> = {
-      TRES_BIEN: 'Très Bien', BIEN: 'Bien',
-      ASSEZ_BIEN: 'Assez Bien', PASSABLE: 'Passable',
-    };
-    return mention ? (labels[mention] || mention) : '—';
-  };
-
-  const getDecisionLabel = (decision?: string) => {
-    const labels: Record<string, string> = {
-      DIPLOME: 'Diplômé(e)',
-      REPRISE_SOUTENANCE: 'Reprise de Soutenance',
-      REDOUBLE: 'Redouble la Licence 3',
-    };
-    return decision ? (labels[decision] || decision) : 'En attente';
-  };
-
-  const getNoteColor = (note?: number) => {
-    if (note === undefined) return 'text-gray-400';
-    if (note >= 10) return 'text-green-700';
-    return 'text-red-600';
-  };
+  const handlePrint = () => window.print();
 
   if (loading) {
     return (
-      <EtudiantLayout><div className="flex justify-center items-center h-64"><Loader2 className="w-8 h-8 animate-spin text-green-600" /></div></EtudiantLayout>
+      <EtudiantLayout>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+        </div>
+      </EtudiantLayout>
     );
   }
 
   return (
     <EtudiantLayout>
-      {/* Header — masqué à l'impression */}
-      <div className="bg-white shadow print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate('/etudiant/dashboard')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Mes Bulletins</h1>
-                <p className="text-gray-600 mt-1">
-                  {etudiant?.prenom} {etudiant?.utilisateur?.nom}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Printer className="w-4 h-4" />
-              Imprimer
-            </button>
-          </div>
-        </div>
-      </div>
+      <div className="max-w-5xl mx-auto">
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:px-0 print:py-0">
-        {error && (
-          <div className="mb-6 flex items-start gap-4 p-4 bg-red-50 border border-red-200 rounded-lg print:hidden">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
-        {/* Sélecteurs — masqués à l'impression */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6 print:hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Type de bulletin */}
+        {/* Contrôles — masqués à l'impression */}
+        <div className="bg-white rounded-xl shadow-md p-4 mb-6 print:hidden">
+          <div className="flex flex-wrap items-end gap-4">
+            {/* Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
                 Type de bulletin
               </label>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setBulletinType('semestre')}
-                  className={`flex-1 py-2 px-4 rounded-lg border-2 font-medium transition-all ${
-                    bulletinType === 'semestre'
-                      ? 'border-blue-600 bg-blue-600 text-white'
-                      : 'border-gray-300 text-gray-700 hover:border-blue-400'
-                  }`}
-                >
-                  Semestre
-                </button>
-                <button
-                  onClick={() => setBulletinType('annuel')}
-                  className={`flex-1 py-2 px-4 rounded-lg border-2 font-medium transition-all ${
-                    bulletinType === 'annuel'
-                      ? 'border-blue-600 bg-blue-600 text-white'
-                      : 'border-gray-300 text-gray-700 hover:border-blue-400'
-                  }`}
-                >
-                  Annuel
-                </button>
+                {(['semestre', 'annuel'] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => { setBulletinType(t); setBulletinData(null); }}
+                    className={`px-4 py-2 rounded-lg border-2 font-medium transition-all text-sm ${
+                      bulletinType === t
+                        ? 'border-indigo-600 bg-indigo-600 text-white'
+                        : 'border-gray-300 text-gray-700 hover:border-indigo-400'
+                    }`}
+                  >
+                    {t === 'semestre' ? 'Semestre' : 'Annuel'}
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Sélection semestre */}
             {bulletinType === 'semestre' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="flex-1 min-w-48">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
                   Semestre
                 </label>
                 <select
                   value={selectedSemestre}
                   onChange={(e) => setSelectedSemestre(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-sm"
                 >
                   <option value="">Choisir un semestre</option>
                   {semestres.map((s) => (
@@ -341,314 +346,63 @@ export const Bulletins: React.FC = () => {
                 </select>
               </div>
             )}
+
+            {/* Boutons d'action */}
+            {bulletinData && (
+              <div className="flex gap-2 ml-auto">
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                >
+                  <Printer className="w-4 h-4" />
+                  Imprimer
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+                >
+                  <Download className="w-4 h-4" />
+                  PDF
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {loadingBulletin ? (
-          <div className="flex justify-center items-center h-48">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        {/* Erreur */}
+        {error && (
+          <div className="mb-4 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg print:hidden">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 text-sm">{error}</p>
           </div>
-        ) : (
-          <>
-            {/* ===== BULLETIN SEMESTRE ===== */}
-            {bulletinType === 'semestre' && selectedSemestre && uesData.length > 0 && (
-              <div className="bg-white rounded-xl shadow-md overflow-hidden print:shadow-none print:rounded-none">
-                {/* En-tête bulletin */}
-                <div className="bg-blue-700 text-white p-6 print:bg-blue-700">
-                  <div className="text-center">
-                    <h2 className="text-2xl font-bold">INPTIC — LP ASUR</h2>
-                    <h3 className="text-xl mt-1">
-                      BULLETIN DE NOTES — {semestres.find(s => s.id === selectedSemestre)?.libelle?.toUpperCase()}
-                    </h3>
-                    <p className="text-blue-200 mt-1">
-                      Année universitaire : {semestres.find(s => s.id === selectedSemestre)?.anneeUniversitaire}
-                    </p>
-                  </div>
-                </div>
+        )}
 
-                {/* Infos étudiant */}
-                <div className="p-6 border-b border-gray-200 bg-gray-50">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Nom :</span>
-                      <p className="font-semibold">{etudiant?.utilisateur?.nom}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Prénom :</span>
-                      <p className="font-semibold">{etudiant?.prenom}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Matricule :</span>
-                      <p className="font-semibold">{etudiant?.matricule}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Date de naissance :</span>
-                      <p className="font-semibold">
-                        {etudiant?.date_naissance
-                          ? new Date(etudiant.date_naissance).toLocaleDateString('fr-FR')
-                          : '—'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+        {/* Chargement */}
+        {loadingBulletin && (
+          <div className="flex justify-center items-center h-48">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+          </div>
+        )}
 
-                {/* Tableau des notes */}
-                <div className="p-6">
-                  {uesData.map((ue) => (
-                    <div key={ue.code} className="mb-6">
-                      {/* En-tête UE */}
-                      <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-2">
-                        <div>
-                          <span className="font-bold text-blue-900">{ue.code}</span>
-                          <span className="text-blue-800 ml-2">{ue.libelle}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          {ue.acquise
-                            ? <CheckCircle className="w-5 h-5 text-green-600" />
-                            : <XCircle className="w-5 h-5 text-red-500" />
-                          }
-                          <span className={`font-bold text-lg ${ue.acquise ? 'text-green-700' : 'text-red-600'}`}>
-                            {ue.moyenne !== undefined ? `${ue.moyenne.toFixed(2)}/20` : '—'}
-                          </span>
-                          <span className="text-sm text-gray-600">
-                            {ue.creditsAcquis}/{ue.creditsTotal} crédits
-                          </span>
-                        </div>
-                      </div>
+        {/* Bulletin */}
+        {!loadingBulletin && bulletinData && (
+          <BulletinDocument data={bulletinData} />
+        )}
 
-                      {/* Matières */}
-                      <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
-                        <thead>
-                          <tr className="bg-gray-100">
-                            <th className="px-4 py-2 text-left font-semibold text-gray-700">Matière</th>
-                            <th className="px-3 py-2 text-center font-semibold text-gray-700">Coef.</th>
-                            <th className="px-3 py-2 text-center font-semibold text-gray-700">Crédits</th>
-                            <th className="px-3 py-2 text-center font-semibold text-gray-700">CC</th>
-                            <th className="px-3 py-2 text-center font-semibold text-gray-700">Examen</th>
-                            <th className="px-3 py-2 text-center font-semibold text-gray-700">Rattrapage</th>
-                            <th className="px-3 py-2 text-center font-semibold text-gray-700">Moyenne</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {ue.matieres.map((m, i) => (
-                            <tr key={i} className="hover:bg-gray-50">
-                              <td className="px-4 py-2 text-gray-900">{m.libelle}</td>
-                              <td className="px-3 py-2 text-center text-gray-600">{m.coefficient}</td>
-                              <td className="px-3 py-2 text-center text-gray-600">{m.credits}</td>
-                              <td className={`px-3 py-2 text-center ${getNoteColor(m.cc)}`}>
-                                {m.cc !== undefined ? m.cc.toFixed(2) : '—'}
-                              </td>
-                              <td className={`px-3 py-2 text-center ${getNoteColor(m.examen)}`}>
-                                {m.examen !== undefined ? m.examen.toFixed(2) : '—'}
-                              </td>
-                              <td className={`px-3 py-2 text-center ${getNoteColor(m.rattrapage)}`}>
-                                {m.rattrapage !== undefined ? m.rattrapage.toFixed(2) : '—'}
-                              </td>
-                              <td className={`px-3 py-2 text-center font-bold ${getNoteColor(m.moyenne)}`}>
-                                {m.moyenne !== undefined ? m.moyenne.toFixed(2) : '—'}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ))}
-
-                  {/* Résultat semestre */}
-                  {resultat && (
-                    <div className={`mt-6 p-5 rounded-xl border-2 ${
-                      resultat.valide ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'
-                    }`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {resultat.valide
-                            ? <CheckCircle className="w-7 h-7 text-green-600" />
-                            : <XCircle className="w-7 h-7 text-red-600" />
-                          }
-                          <div>
-                            <h3 className={`font-bold text-xl ${resultat.valide ? 'text-green-800' : 'text-red-800'}`}>
-                              Semestre {resultat.valide ? 'VALIDÉ' : 'NON VALIDÉ'}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {resultat.creditsAcquis}/{resultat.creditsTotal} crédits acquis
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className={`text-4xl font-bold ${resultat.valide ? 'text-green-700' : 'text-red-700'}`}>
-                            {resultat.moyenneSemestre?.toFixed(2)}/20
-                          </div>
-                          <div className="text-sm text-gray-600 mt-1">Moyenne générale</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Bouton téléchargement */}
-                <div className="px-6 pb-6 print:hidden">
-                  <button
-                    onClick={handlePrint}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                  >
-                    <Download className="w-5 h-5" />
-                    Télécharger / Imprimer
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ===== BULLETIN ANNUEL ===== */}
-            {bulletinType === 'annuel' && (
-              <div className="bg-white rounded-xl shadow-md overflow-hidden print:shadow-none">
-                {/* En-tête */}
-                <div className="bg-blue-700 text-white p-6">
-                  <div className="text-center">
-                    <h2 className="text-2xl font-bold">INPTIC — LP ASUR</h2>
-                    <h3 className="text-xl mt-1">BULLETIN ANNUEL</h3>
-                  </div>
-                </div>
-
-                {/* Infos étudiant */}
-                <div className="p-6 border-b border-gray-200 bg-gray-50">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Nom :</span>
-                      <p className="font-semibold">{etudiant?.utilisateur?.nom}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Prénom :</span>
-                      <p className="font-semibold">{etudiant?.prenom}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Matricule :</span>
-                      <p className="font-semibold">{etudiant?.matricule}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">BAC :</span>
-                      <p className="font-semibold">
-                        {etudiant?.bac_type} — {etudiant?.annee_bac}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-6">
-                  {resultatAnnuel ? (
-                    <>
-                      {/* Résultats par semestre */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        {[resultatAnnuel.resultatS5, resultatAnnuel.resultatS6].map((res, i) => (
-                          res && (
-                            <div key={i} className={`p-5 rounded-xl border-2 ${
-                              res.valide ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-                            }`}>
-                              <div className="flex items-center justify-between mb-3">
-                                <h3 className="font-bold text-lg text-gray-900">
-                                  {res.semestre?.libelle || `Semestre ${i === 0 ? 5 : 6}`}
-                                </h3>
-                                {res.valide
-                                  ? <CheckCircle className="w-6 h-6 text-green-600" />
-                                  : <XCircle className="w-6 h-6 text-red-600" />
-                                }
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="text-center p-3 bg-white rounded-lg">
-                                  <div className={`text-2xl font-bold ${res.valide ? 'text-green-700' : 'text-red-600'}`}>
-                                    {res.moyenneSemestre?.toFixed(2)}
-                                  </div>
-                                  <div className="text-xs text-gray-600">Moyenne /20</div>
-                                </div>
-                                <div className="text-center p-3 bg-white rounded-lg">
-                                  <div className="text-2xl font-bold text-blue-600">
-                                    {res.creditsAcquis}/{res.creditsTotal}
-                                  </div>
-                                  <div className="text-xs text-gray-600">Crédits</div>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        ))}
-                      </div>
-
-                      {/* Décision finale */}
-                      <div className={`p-6 rounded-xl border-2 ${
-                        resultatAnnuel.decisionJury === 'DIPLOME'
-                          ? 'bg-green-50 border-green-300'
-                          : resultatAnnuel.decisionJury === 'REPRISE_SOUTENANCE'
-                          ? 'bg-amber-50 border-amber-300'
-                          : 'bg-red-50 border-red-300'
-                      }`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <Award className="w-12 h-12 text-blue-600" />
-                            <div>
-                              <h3 className="text-2xl font-bold text-gray-900">
-                                Décision du Jury
-                              </h3>
-                              <p className={`text-xl font-bold mt-1 ${
-                                resultatAnnuel.decisionJury === 'DIPLOME' ? 'text-green-700' :
-                                resultatAnnuel.decisionJury === 'REPRISE_SOUTENANCE' ? 'text-amber-700' :
-                                'text-red-700'
-                              }`}>
-                                {getDecisionLabel(resultatAnnuel.decisionJury)}
-                              </p>
-                              {resultatAnnuel.mention && (
-                                <p className="text-gray-600 mt-1">
-                                  Mention : <strong>{getMentionLabel(resultatAnnuel.mention)}</strong>
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-4xl font-bold text-blue-700">
-                              {resultatAnnuel.moyenneAnnuelle?.toFixed(2)}/20
-                            </div>
-                            <div className="text-sm text-gray-600 mt-1">Moyenne annuelle</div>
-                            <div className="text-sm text-gray-600">
-                              {resultatAnnuel.creditsAcquis}/{resultatAnnuel.creditsTotal} crédits
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center py-12">
-                      <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">
-                        Le bulletin annuel n'est pas encore disponible
-                      </p>
-                      <p className="text-sm text-gray-400 mt-2">
-                        Il sera disponible une fois les deux semestres calculés
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {resultatAnnuel && (
-                  <div className="px-6 pb-6 print:hidden">
-                    <button
-                      onClick={handlePrint}
-                      className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                    >
-                      <Download className="w-5 h-5" />
-                      Télécharger / Imprimer
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* État vide */}
-            {bulletinType === 'semestre' && !selectedSemestre && (
-              <div className="bg-white rounded-xl shadow-md p-12 text-center">
-                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Sélectionnez un semestre pour afficher le bulletin</p>
-              </div>
-            )}
-          </>
+        {/* État vide */}
+        {!loadingBulletin && !bulletinData && !error && (
+          <div className="bg-white rounded-xl shadow-md p-12 text-center print:hidden">
+            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Printer className="w-8 h-8 text-indigo-600" />
+            </div>
+            <p className="text-gray-600 font-medium">
+              {bulletinType === 'semestre'
+                ? 'Sélectionnez un semestre pour afficher le bulletin'
+                : 'Chargement du bulletin annuel...'}
+            </p>
+          </div>
         )}
       </div>
-  </EtudiantLayout>
-);
+    </EtudiantLayout>
+  );
 };

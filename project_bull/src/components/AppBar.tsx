@@ -14,7 +14,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/saisir-notes':   'Saisir des Notes',
   '/admin/absences':       'Gestion des Absences',
   '/admin/calculs':        'Calculs & Validation',
-  '/admin/bulletins':      'Bulletins',
+  '/admin/bulletins':      'Bulletins de Notes',
   '/admin/profil':         'Mon Profil',
   // Secrétariat
   '/secretariat/tableau-bord':  'Tableau de Bord',
@@ -23,6 +23,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/secretariat/academique':    'Gestion Académique',
   '/secretariat/saisir-notes':  'Saisir des Notes',
   '/secretariat/absences':      'Gestion des Absences',
+  '/secretariat/calculs':       'Calculs & Validation',
+  '/secretariat/bulletins':     'Bulletins de Notes',
   '/secretariat/profil':        'Mon Profil',
   // Enseignant
   '/enseignant/dashboard':           'Tableau de Bord',
