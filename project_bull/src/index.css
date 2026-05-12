@@ -2,8 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Smooth transitions */
+/* ── Taille de police réduite globalement ── */
 @layer base {
+  html {
+    font-size: 13px; /* base réduite : 16px → 13px, tout le rem s'adapte */
+  }
+
   * {
     @apply transition-colors duration-200;
   }
@@ -11,8 +15,8 @@
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {

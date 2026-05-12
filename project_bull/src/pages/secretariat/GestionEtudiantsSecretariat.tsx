@@ -182,14 +182,10 @@ export const GestionEtudiantsSecretariat: React.FC = () => {
 
             <form onSubmit={handleCreate} className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom (identifiant de connexion) *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
                 <input type="text" required value={formData.nom}
                   onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                  placeholder="Ex: dupont2024"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" />
-                <p className="text-xs text-gray-500 mt-1">Sera utilisé comme identifiant de connexion</p>
               </div>
 
               <div>
