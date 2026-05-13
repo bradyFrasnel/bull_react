@@ -1,188 +1,165 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { AdminLayout } from "../../components/AdminLayout";
-import { X, ZoomIn, Download, FileText } from "lucide-react";
-import exS5 from "../../../assets/images/Ex_BulletinS5.png";
-import exS6 from "../../../assets/images/Ex_BulletinS6.png";
-import exAnnuel from "../../../assets/images/Ex_BullAnnuel.png";
-
-interface Modele {
-  id: string;
-  titre: string;
-  description: string;
-  image: string;
-  badge: string;
-  badgeColor: string;
-}
-
-const MODELES: Modele[] = [
-  {
-    id: "s5",
-    titre: "Bulletin Semestre 5",
-    description: "Modèle officiel du bulletin de notes du Semestre 5 — LP ASUR. Inclut les UE, matières, coefficients, crédits, absences, statistiques et signatures.",
-    image: exS5,
-    badge: "S5",
-    badgeColor: "bg-blue-600",
-  },
-  {
-    id: "s6",
-    titre: "Bulletin Semestre 6",
-    description: "Modèle officiel du bulletin de notes du Semestre 6 — LP ASUR. Même structure que le S5 avec les matières spécifiques au second semestre.",
-    image: exS6,
-    badge: "S6",
-    badgeColor: "bg-indigo-600",
-  },
-  {
-    id: "annuel",
-    titre: "Bulletin Annuel",
-    description: "Modèle officiel du bulletin annuel — LP ASUR. Récapitulatif des deux semestres avec décision du jury, mention et statistiques de promotion.",
-    image: exAnnuel,
-    badge: "Annuel",
-    badgeColor: "bg-gray-800",
-  },
-];
+import { semestreService } from "../../services";
+import { BulletinDocument, BulletinSemestreData, UEData } from "../../components/BulletinDocument";
+import { Semestre } from "../../types";
+import { Loader2, AlertCircle, Printer, Eye } from "lucide-react";
 
 export const ModellesBulletins: React.FC = () => {
-  const [selected, setSelected] = useState<Modele | null>(null);
+  const [semestres, setSemestres] = useState<Semestre[]>([]);
+  const [selectedSemestreId, setSelectedSemestreId] = useState("");
+  const [modele, setModele] = useState<BulletinSemestreData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingModele, setLoadingModele] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleDownload = (modele: Modele) => {
-    const link = document.createElement("a");
-    link.href = modele.image;
-    link.download = `Modele_${modele.id}_INPTIC_ASUR.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  useEffect(() => { fetchSemestres(); }, []);
+  useEffect(() => { if (selectedSemestreId) buildModele(); }, [selectedSemestreId]);
+
+  const fetchSemestres = async () => {
+    try {
+      setLoading(true);
+      const data = await semestreService.getAll();
+      setSemestres(data);
+      if (data.length > 0) setSelectedSemestreId(data[0].id);
+    } catch { setError("Erreur lors du chargement des semestres"); }
+    finally { setLoading(false); }
+  };
+
+  const buildModele = async () => {
+    const semestre = semestres.find(s => s.id === selectedSemestreId);
+    if (!semestre) return;
+    try {
+      setLoadingModele(true);
+      setError("");
+      const detail = await semestreService.getById(selectedSemestreId);
+      const ues: UEData[] = (detail.ues || []).map(ue => ({
+        code: ue.code,
+        libelle: ue.libelle,
+        matieres: (ue.matieres || []).map(m => ({
+          libelle: m.libelle,
+          coefficient: m.coefficient,
+          credits: m.credits,
+          cc: undefined,
+          examen: undefined,
+          rattrapage: undefined,
+          moyenne: undefined,
+          absences: undefined,
+        })),
+        moyenne: undefined,
+        creditsTotal: (ue.matieres || []).reduce((acc, m) => acc + m.credits, 0),
+        creditsAcquis: 0,
+        acquise: false,
+      }));
+      const data: BulletinSemestreData = {
+        type: "semestre",
+        etudiant: {
+          nom: "NOM",
+          prenom: "Prénom",
+          matricule: "MATRICULE",
+          dateNaissance: undefined,
+          lieuNaissance: undefined,
+        },
+        semestre: {
+          code: semestre.code,
+          libelle: semestre.libelle,
+          anneeUniversitaire: semestre.anneeUniversitaire,
+        },
+        ues,
+        moyenneSemestre: undefined,
+        creditsTotal: ues.reduce((acc, u) => acc + u.creditsTotal, 0),
+        creditsAcquis: 0,
+        valide: undefined,
+      };
+      setModele(data);
+    } catch { setError("Erreur lors de la génération du modèle"); }
+    finally { setLoadingModele(false); }
   };
 
   return (
     <AdminLayout>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Modèles des Bulletins</h1>
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-6 print:hidden">
+          <h1 className="text-2xl font-bold text-gray-900">Modèle de Bulletin</h1>
           <p className="text-gray-500 text-sm mt-0.5">
-            Modèles officiels INPTIC — LP ASUR. Cliquez sur un modèle pour l'agrandir.
+            Structure du bulletin générée depuis le référentiel académique — champs vides, sans données étudiant.
           </p>
         </div>
 
-        {/* Grille des modèles */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {MODELES.map((modele) => (
-            <div
-              key={modele.id}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-            >
-              {/* Badge */}
-              <div className="relative">
-                <span className={`absolute top-3 left-3 z-10 px-2 py-1 rounded-full text-white text-xs font-bold ${modele.badgeColor}`}>
-                  {modele.badge}
-                </span>
-                {/* Aperçu image */}
-                <div
-                  className="relative cursor-pointer group overflow-hidden bg-gray-100"
-                  style={{ height: "420px" }}
-                  onClick={() => setSelected(modele)}
-                >
-                  <img
-                    src={modele.image}
-                    alt={modele.titre}
-                    className="w-full h-full object-contain object-top transition-transform duration-300 group-hover:scale-105"
-                  />
-                  {/* Overlay hover */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full p-3 shadow-lg">
-                      <ZoomIn className="w-6 h-6 text-gray-700" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+        {error && (
+          <div className="mb-4 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg print:hidden">
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
 
-              {/* Infos */}
-              <div className="p-4">
-                <h3 className="font-bold text-gray-900 mb-1">{modele.titre}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed mb-4">
-                  {modele.description}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSelected(modele)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-xs font-medium"
-                  >
-                    <ZoomIn className="w-3.5 h-3.5" />
-                    Agrandir
-                  </button>
-                  <button
-                    onClick={() => handleDownload(modele)}
-                    className="flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs font-medium"
-                    title="Télécharger le modèle"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                  </button>
+        {/* Sélecteur + actions */}
+        <div className="bg-white rounded-xl shadow-md p-5 mb-6 print:hidden">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="flex-1 min-w-48">
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Semestre
+              </label>
+              {loading ? (
+                <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                  <span className="text-sm text-gray-500">Chargement...</span>
                 </div>
-              </div>
+              ) : (
+                <select
+                  value={selectedSemestreId}
+                  onChange={e => setSelectedSemestreId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white text-sm"
+                >
+                  <option value="">Choisir un semestre</option>
+                  {semestres.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.libelle} — {s.anneeUniversitaire}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
-          ))}
+
+            {modele && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                >
+                  <Printer className="w-4 h-4" />
+                  Imprimer le modèle
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Info */}
+          {modele && (
+            <div className="mt-4 flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <Eye className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              
+            </div>
+          )}
         </div>
 
-        {/* Note informative */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-5 flex items-start gap-4">
-          <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-semibold text-blue-900 text-sm">À propos des modèles</h3>
-            <p className="text-blue-700 text-xs mt-1 leading-relaxed">
-              Ces modèles sont les références officielles pour la génération des bulletins de la LP ASUR — INPTIC.
-              Les bulletins générés dans la section <strong>Bulletins de Notes</strong> respectent fidèlement ces modèles :
-              en-tête institutionnel, tableau des notes par UE, statistiques de promotion, et signatures.
+        {/* Modèle rendu */}
+        {loadingModele ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+          </div>
+        ) : modele ? (
+          <BulletinDocument data={modele} />
+        ) : !loading && semestres.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-12 text-center">
+            <AlertCircle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
+            <p className="text-gray-700 font-medium">Aucun semestre configuré</p>
+            <p className="text-gray-500 text-sm mt-2">
+              Créez d'abord des semestres, UE et matières dans <strong>Référentiel & Calculs</strong>.
             </p>
           </div>
-        </div>
+        ) : null}
       </div>
-
-      {/* Modal plein écran */}
-      {selected && (
-        <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            className="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header modal */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gray-50">
-              <div className="flex items-center gap-3">
-                <span className={`px-2 py-1 rounded-full text-white text-xs font-bold ${selected.badgeColor}`}>
-                  {selected.badge}
-                </span>
-                <h2 className="font-bold text-gray-900">{selected.titre}</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleDownload(selected)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-xs font-medium"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Télécharger
-                </button>
-                <button
-                  onClick={() => setSelected(null)}
-                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-            </div>
-
-            {/* Image plein écran */}
-            <div className="overflow-auto" style={{ maxHeight: "calc(95vh - 60px)" }}>
-              <img
-                src={selected.image}
-                alt={selected.titre}
-                className="w-full h-auto"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </AdminLayout>
   );
 };
