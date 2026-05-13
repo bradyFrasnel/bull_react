@@ -7,23 +7,23 @@ import { AlertCircle, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
 
 const ROLE_CONFIG: Record<string, { title: string; subtitle: string; color: string }> = {
   etudiant: {
-    title: 'Connexion Étudiant',
-    subtitle: 'Accédez à vos notes et bulletins',
+    title: 'Connexion',
+    subtitle: 'Accédez à vos notes officielles',
     color: 'blue',
   },
   enseignant: {
-    title: 'Connexion Enseignant',
-    subtitle: 'Saisissez et consultez les notes',
+    title: 'Connexion',
+    subtitle: 'Gérez vos relevés en toute simplicité',
     color: 'green',
   },
   secretariat: {
-    title: 'Connexion Secrétariat',
-    subtitle: 'Gestion administrative complète',
+    title: 'Connexion',
+    subtitle: 'Gestion administrative',
     color: 'amber',
   },
   admin: {
-    title: 'Connexion Administrateur',
-    subtitle: 'Accès complet au système',
+    title: ' Administrateur',
+    subtitle: 'Accédez au système',
     color: 'red',
   },
 };

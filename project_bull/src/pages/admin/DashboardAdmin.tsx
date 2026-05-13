@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
 import {
@@ -6,7 +6,6 @@ import {
   GraduationCap,
   BookOpen,
   FileText,
-  TrendingUp,
   AlertCircle,
   Loader2,
   Edit,
@@ -20,7 +19,6 @@ import {
   evaluationService,
 } from '../../services';
 import { useAuth } from '../../hooks/useAuth';
-import { ROUTES } from '../../utils';
 
 interface DashboardStats {
   totalEtudiants: number;
@@ -83,7 +81,7 @@ export const DashboardAdmin: React.FC = () => {
 
   const statCards = [
     {
-      label: 'Étudiants',
+      label: 'étudiants',
       value: stats.totalEtudiants,
       icon: GraduationCap,
       color: 'blue',
@@ -110,7 +108,7 @@ export const DashboardAdmin: React.FC = () => {
       action: () => navigate(`${basePath}/academique`),
     },
     {
-      label: 'Évaluations',
+      label: 'évaluations',
       value: stats.totalEvaluations,
       icon: FileText,
       color: 'purple',
@@ -145,7 +143,7 @@ export const DashboardAdmin: React.FC = () => {
     },
     {
       label: 'Bulletins',
-      description: 'Générer et imprimer les bulletins de la promotion',
+      description: 'Acceder à l\'ensemble des bulletins',
       icon: FileText,
       color: 'indigo',
       bg: 'bg-indigo-100',
@@ -161,9 +159,8 @@ export const DashboardAdmin: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Tableau de Bord</h1>
           <p className="text-gray-600 mt-1">
-            Attension : vous êtes connecté en tant qu'administrateur, toutes actions effectuées peut être decisive .
+            Attension : vous êtes connectés en tant qu'administrateur, toutes actions effectuées peut être decisive .
           </p>
         </div>
 
@@ -226,29 +223,6 @@ export const DashboardAdmin: React.FC = () => {
           </div>
         </div>
 
-        {/* Liens rapides secondaires */}
-        <div className="mb-8 bg-white rounded-xl shadow-md p-5">
-          <h2 className="text-base font-bold text-gray-900 mb-3">Accès Directs</h2>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: 'Saisir Notes', path: `${basePath}/saisir-notes`, color: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
-              { label: 'Absences', path: `${basePath}/absences`, color: 'bg-amber-50 text-amber-700 hover:bg-amber-100' },
-              { label: 'Calculs & Validation', path: isAdmin ? ROUTES.ADMIN_CALCULS : `${basePath}/calculs`, color: 'bg-green-50 text-green-700 hover:bg-green-100' },
-              { label: 'Semestres', path: `${basePath}/academique`, color: 'bg-purple-50 text-purple-700 hover:bg-purple-100' },
-              { label: 'UE & Matières', path: `${basePath}/academique`, color: 'bg-purple-50 text-purple-700 hover:bg-purple-100' },
-            ].map(({ label, path, color }) => (
-              <button
-                key={label}
-                onClick={() => navigate(path)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${color}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Résumé académique */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gestion des utilisateurs */}
           <div className="bg-white rounded-xl shadow-md p-6">
@@ -268,7 +242,7 @@ export const DashboardAdmin: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-2xl font-bold text-blue-600">
-                  {loading ? '—' : stats.totalEtudiants}
+                  {loading ? '0' : stats.totalEtudiants}
                 </span>
               </button>
               <button
@@ -282,13 +256,13 @@ export const DashboardAdmin: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-2xl font-bold text-green-600">
-                  {loading ? '—' : stats.totalEnseignants}
+                  {loading ? '0' : stats.totalEnseignants}
                 </span>
               </button>
             </div>
           </div>
 
-          {/* Référentiel académique */}
+          {/* RÃ©fÃ©rentiel acadÃ©mique */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-amber-600" />
@@ -306,7 +280,7 @@ export const DashboardAdmin: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-2xl font-bold text-amber-600">
-                  {loading ? '—' : stats.totalSemestres}
+                  {loading ? '0' : stats.totalSemestres}
                 </span>
               </button>
               <button
@@ -320,7 +294,7 @@ export const DashboardAdmin: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-2xl font-bold text-purple-600">
-                  {loading ? '—' : stats.totalMatieres}
+                  {loading ? '0' : stats.totalMatieres}
                 </span>
               </button>
             </div>
@@ -330,3 +304,4 @@ export const DashboardAdmin: React.FC = () => {
     </AdminLayout>
   );
 };
+

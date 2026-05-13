@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { matiereService, etudiantService } from '../../services';
 import { evaluationService } from '../../services/evaluation.service';
@@ -49,7 +49,7 @@ export const SaisirNotes: React.FC = () => {
     }
   };
 
-  // Charger le relevé complet de la matière (tous les étudiants + notes existantes)
+  // Charger le relevÃ© complet de la matiÃ¨re (tous les Ã©tudiants + notes existantes)
   const fetchReleve = async () => {
     try {
       setLoadingReleve(true);
@@ -65,7 +65,7 @@ export const SaisirNotes: React.FC = () => {
           const ex = r.noteExamen !== null && r.noteExamen !== undefined ? String(r.noteExamen) : '';
           const ra = r.noteRattrapage !== null && r.noteRattrapage !== undefined ? String(r.noteRattrapage) : '';
 
-          // Calcul prévisualisation moyenne
+          // Calcul prÃ©visualisation moyenne
           const notes = [r.noteCC, r.noteExamen, r.noteRattrapage]
             .filter(n => n !== null && n !== undefined) as number[];
           let moy: number | undefined;
@@ -74,7 +74,7 @@ export const SaisirNotes: React.FC = () => {
             moy = sorted.reduce((a, b) => a + b, 0) / sorted.length;
           }
 
-          // Rattrapage autorisé si moyenne CC+Examen < 6
+          // Rattrapage autorisÃ© si moyenne CC+Examen < 6
           let rattrapageAutorise = false;
           if (r.noteCC !== null && r.noteExamen !== null) {
             const moyInit = [r.noteCC, r.noteExamen].sort((a, b) => b - a).slice(0, 2)
@@ -99,7 +99,7 @@ export const SaisirNotes: React.FC = () => {
         });
         setRows(mapped);
       } else {
-        // Fallback : charger les étudiants et construire un relevé vide
+        // Fallback : charger les Ã©tudiants et construire un relevÃ© vide
         const etudiants = await etudiantService.getAll();
         setRows(etudiants.map(e => ({
           utilisateurId: e.id,
@@ -121,7 +121,7 @@ export const SaisirNotes: React.FC = () => {
           noteCC: '', noteExamen: '', noteRattrapage: '',
         })));
       } catch {
-        setError('Erreur lors du chargement du relevé');
+        setError('Erreur lors du chargement du relevÃ©');
       }
     } finally {
       setLoadingReleve(false);
@@ -133,7 +133,7 @@ export const SaisirNotes: React.FC = () => {
       const updated = [...prev];
       const row = { ...updated[index], [field]: value };
 
-      // Recalcul prévisualisation
+      // Recalcul prÃ©visualisation
       const cc = parseFloat(row.noteCC);
       const ex = parseFloat(row.noteExamen);
       const ra = parseFloat(row.noteRattrapage);
@@ -145,7 +145,7 @@ export const SaisirNotes: React.FC = () => {
         row.moyenneCalculee = undefined;
       }
 
-      // Rattrapage autorisé
+      // Rattrapage autorisÃ©
       if (!isNaN(cc) && !isNaN(ex)) {
         const moyInit = [cc, ex].sort((a, b) => b - a).slice(0, 2)
           .reduce((a, b) => a + b, 0) / 2;
@@ -167,14 +167,14 @@ export const SaisirNotes: React.FC = () => {
         if (val !== '' && val !== undefined) {
           const n = parseFloat(val);
           if (isNaN(n) || n < 0 || n > 20) {
-            setError(`Note invalide pour ${row.nom} ${row.prenom} : "${val}" (doit être entre 0 et 20)`);
+            setError(`Note invalide pour ${row.nom} ${row.prenom} : "${val}" (doit Ãªtre entre 0 et 20)`);
             return;
           }
         }
       }
-      // Vérifier rattrapage
+      // VÃ©rifier rattrapage
       if (row.noteRattrapage !== '' && !row.rattrapageAutorise) {
-        setError(`Rattrapage non autorisé pour ${row.nom} ${row.prenom} (moyenne initiale ≥ 6/20)`);
+        setError(`Rattrapage non autorisÃ© pour ${row.nom} ${row.prenom} (moyenne initiale â‰¥ 6/20)`);
         return;
       }
     }
@@ -192,8 +192,8 @@ export const SaisirNotes: React.FC = () => {
       }));
 
       await evaluationService.saveReleve(selectedMatiere, user?.id ?? '', notes);
-      setSuccess(`Relevé sauvegardé — ${rows.length} étudiants mis à jour`);
-      await fetchReleve(); // Recharger pour avoir les IDs et moyennes calculées
+      setSuccess(`RelevÃ© sauvegardÃ© â€” ${rows.length} Ã©tudiants mis Ã  jour`);
+      await fetchReleve(); // Recharger pour avoir les IDs et moyennes calculÃ©es
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erreur lors de la sauvegarde');
     } finally {
@@ -202,12 +202,6 @@ export const SaisirNotes: React.FC = () => {
   };
 
   const matiere = matieres.find(m => m.id === selectedMatiere);
-  const noteColor = (val: string) => {
-    if (!val) return 'text-gray-400';
-    const n = parseFloat(val);
-    if (isNaN(n)) return 'text-red-500';
-    return n >= 10 ? 'text-green-700' : 'text-red-600';
-  };
 
   if (loading) {
     return (
@@ -228,7 +222,7 @@ export const SaisirNotes: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Notes & Absences</h1>
             <p className="text-gray-500 text-sm mt-0.5">
-              Saisie en masse — toute la classe en une seule opération
+              Saisie en masse â€” toute la classe en une seule opÃ©ration
             </p>
           </div>
           <div className="flex gap-3">
@@ -267,27 +261,27 @@ export const SaisirNotes: React.FC = () => {
           </div>
         )}
 
-        {/* Sélection matière */}
+        {/* SÃ©lection matiÃ¨re */}
         <div className="bg-white rounded-xl shadow-md p-5 mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <BookOpen className="w-4 h-4 inline mr-1" />
-            Matière
+            MatiÃ¨re
           </label>
           <select
             value={selectedMatiere}
             onChange={e => setSelectedMatiere(e.target.value)}
             className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
           >
-            <option value="">Sélectionner une matière</option>
+            <option value="">SÃ©lectionner une matiÃ¨re</option>
             {matieres.map(m => (
               <option key={m.id} value={m.id}>
-                {m.libelle} — Coef. {m.coefficient} — {m.credits} crédits
+                {m.libelle} â€” Coef. {m.coefficient} â€” {m.credits} crÃ©dits
               </option>
             ))}
           </select>
           {matiere && (
             <p className="text-xs text-gray-500 mt-2">
-              {rows.length} étudiant(s) dans le relevé
+              {rows.length} Ã©tudiant(s) dans le relevÃ©
             </p>
           )}
         </div>
@@ -304,7 +298,7 @@ export const SaisirNotes: React.FC = () => {
                 <thead>
                   <tr className="bg-gray-50 border-b">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                      Étudiant
+                      Ã‰tudiant
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
                       Matricule
@@ -319,7 +313,7 @@ export const SaisirNotes: React.FC = () => {
                       Rattrapage
                     </th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide w-24">
-                      Moy. prévis.
+                      Moy. prÃ©vis.
                     </th>
                   </tr>
                 </thead>
@@ -339,7 +333,7 @@ export const SaisirNotes: React.FC = () => {
                           type="number" min="0" max="20" step="0.01"
                           value={row.noteCC}
                           onChange={e => updateRow(i, 'noteCC', e.target.value)}
-                          placeholder="—"
+                          placeholder="â€”"
                           className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                             row.noteCC ? 'border-blue-300 bg-blue-50' : 'border-gray-300'
                           }`}
@@ -352,7 +346,7 @@ export const SaisirNotes: React.FC = () => {
                           type="number" min="0" max="20" step="0.01"
                           value={row.noteExamen}
                           onChange={e => updateRow(i, 'noteExamen', e.target.value)}
-                          placeholder="—"
+                          placeholder="â€”"
                           className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                             row.noteExamen ? 'border-blue-300 bg-blue-50' : 'border-gray-300'
                           }`}
@@ -365,16 +359,16 @@ export const SaisirNotes: React.FC = () => {
                           type="number" min="0" max="20" step="0.01"
                           value={row.noteRattrapage}
                           onChange={e => updateRow(i, 'noteRattrapage', e.target.value)}
-                          placeholder="—"
+                          placeholder="â€”"
                           disabled={!row.rattrapageAutorise && !row.noteRattrapage}
-                          title={!row.rattrapageAutorise ? 'Rattrapage non autorisé (moyenne ≥ 6)' : ''}
+                          title={!row.rattrapageAutorise ? 'Rattrapage non autorisÃ© (moyenne â‰¥ 6)' : ''}
                           className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-40 disabled:cursor-not-allowed ${
                             row.noteRattrapage ? 'border-amber-300 bg-amber-50' : 'border-gray-300'
                           }`}
                         />
                       </td>
 
-                      {/* Moyenne prévisualisation */}
+                      {/* Moyenne prÃ©visualisation */}
                       <td className="px-4 py-2.5 text-center">
                         {row.moyenneCalculee !== undefined ? (
                           <span className={`font-bold text-sm ${
@@ -383,7 +377,7 @@ export const SaisirNotes: React.FC = () => {
                             {row.moyenneCalculee.toFixed(2)}
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-sm">—</span>
+                          <span className="text-gray-400 text-sm">â€”</span>
                         )}
                       </td>
                     </tr>
@@ -395,7 +389,7 @@ export const SaisirNotes: React.FC = () => {
             {/* Footer avec bouton save */}
             <div className="px-4 py-3 bg-gray-50 border-t flex items-center justify-between">
               <p className="text-xs text-gray-500">
-                {rows.filter(r => r.noteCC || r.noteExamen).length} / {rows.length} étudiants avec notes
+                {rows.filter(r => r.noteCC || r.noteExamen).length} / {rows.length} Ã©tudiants avec notes
               </p>
               <button
                 onClick={handleSave}
@@ -410,10 +404,11 @@ export const SaisirNotes: React.FC = () => {
         ) : selectedMatiere ? (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
             <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-500">Aucun étudiant trouvé pour cette matière</p>
+            <p className="text-gray-500">Aucun Ã©tudiant trouvÃ© pour cette matiÃ¨re</p>
           </div>
         ) : null}
       </div>
     </AdminLayout>
   );
 };
+

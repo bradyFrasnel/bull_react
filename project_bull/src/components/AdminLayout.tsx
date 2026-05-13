@@ -88,6 +88,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       path: `${basePath}/bulletins`,
     },
     {
+      label: 'Modèles Bulletins',
+      icon: FileText,
+      path: `${basePath}/modeles-bulletins`,
+    },
+    {
       label: 'Profil',
       icon: User,
       path: `${basePath}/profil`,
