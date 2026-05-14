@@ -113,7 +113,7 @@ export const matiereService = {
 // On normalise pour que etudiant.id = etudiant.utilisateurId.
 const normalizeEtudiant = (e: any): Etudiant => ({
   ...e,
-  id: e.utilisateurId ?? e.id,
+  id: e.id ?? e.utilisateurId,
   utilisateurId: e.utilisateurId ?? e.id,
 });
 
@@ -166,7 +166,7 @@ export const etudiantService = {
 // ============ ENSEIGNANTS ============
 const normalizeEnseignant = (e: any): Enseignant => ({
   ...e,
-  id: e.utilisateurId ?? e.id,
+  id: e.id ?? e.utilisateurId,
   utilisateurId: e.utilisateurId ?? e.id,
 });
 
@@ -221,11 +221,13 @@ export const enseignantService = {
 
   async getMatieres(enseignantId: string): Promise<Matiere[]> {
     const response = await api.get(`/enseignants/${enseignantId}/matieres`);
-    return response.data;
+    return (response.data || []).map((item: any) => item.matiere ? item.matiere : item);
   },
 
   async getEnseignantsByMatiere(matiereId: string): Promise<Enseignant[]> {
     const response = await api.get(`/enseignants/matieres/${matiereId}/enseignants`);
-    return response.data;
+    return (response.data || []).map((item: any) => 
+      normalizeEnseignant(item.enseignant ? item.enseignant : item)
+    );
   },
 };
