@@ -156,7 +156,7 @@ export const Dashboard: React.FC = () => {
                 <Edit className="w-6 h-6 text-blue-600" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-gray-900">Saisir des Notes</h3>
+                <h3 className="font-semibold text-gray-900">Relevés</h3>
                 <p className="text-sm text-gray-600">
                   Ajouter ou modifier les évaluations
                 </p>
@@ -217,7 +217,7 @@ export const Dashboard: React.FC = () => {
                     }}
                     className="mt-3 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                   >
-                    Saisir Notes
+                    Relevés
                   </button>
                 </div>
               ))}

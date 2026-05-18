@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api, apiBulk } from './api';
 import {
   Evaluation,
   Absence,
@@ -66,8 +66,10 @@ export const evaluationService = {
     noteCC?: number | null;
     noteExamen?: number | null;
     noteRattrapage?: number | null;
+    absences?: number | null;
   }[]): Promise<any> {
-    const response = await api.put(`/evaluations/releve/matiere/${matiereId}`, {
+    // Utilise apiBulk (timeout 60s) car cette opération peut être longue
+    const response = await apiBulk.put(`/evaluations/releve/matiere/${matiereId}`, {
       saisiePar,
       notes,
     });

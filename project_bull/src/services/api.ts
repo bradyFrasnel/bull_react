@@ -5,31 +5,44 @@ const API_BASE_URL =
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 30000, // 30s pour les requêtes normales
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor to add JWT token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+// Instance dédiée aux opérations lourdes (sauvegarde en masse)
+export const apiBulk = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 60000, // 60s pour saveReleve et autres opérations massives
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Interceptor to handle auth errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user_role');
-      localStorage.removeItem('user_data');
-      window.location.href = '/';
+// Helper pour brancher les interceptors sur une instance
+const attachInterceptors = (instance: ReturnType<typeof axios.create>) => {
+  instance.interceptors.request.use((config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return Promise.reject(error);
-  }
-);
+    return config;
+  });
+
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user_role');
+        localStorage.removeItem('user_data');
+        window.location.href = '/';
+      }
+      return Promise.reject(error);
+    }
+  );
+};
+
+attachInterceptors(api);
+attachInterceptors(apiBulk);

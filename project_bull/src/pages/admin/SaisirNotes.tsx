@@ -1,6 +1,6 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { matiereService, etudiantService } from '../../services';
+import { matiereService, etudiantService, absenceService, calculService } from '../../services';
 import { evaluationService } from '../../services/evaluation.service';
 import { useAuth } from '../../hooks/useAuth';
 import {
@@ -21,6 +21,8 @@ interface ReleveRow {
   evalIdRattrapage?: string;
   moyenneCalculee?: number;
   rattrapageAutorise?: boolean;
+  heuresAbsence: string;
+  absenceId?: string;
 }
 
 export const SaisirNotes: React.FC = () => {
@@ -49,23 +51,27 @@ export const SaisirNotes: React.FC = () => {
     }
   };
 
-  // Charger le relevÃ© complet de la matiÃ¨re (tous les Ã©tudiants + notes existantes)
+  // Charger le relevé complet de la matière (tous les étudiants + notes existantes)
   const fetchReleve = async () => {
     try {
       setLoadingReleve(true);
       setError('');
       setRows([]);
 
-      const data = await evaluationService.getReleve(selectedMatiere);
+      const [data, absences] = await Promise.all([
+        evaluationService.getReleve(selectedMatiere).catch(() => null),
+        absenceService.getByMatiere(selectedMatiere).catch(() => [])
+      ]);
       // data = { matiere: {...}, releve: [{ utilisateurId, nom, prenom, matricule, noteCC, noteExamen, noteRattrapage, ... }] }
 
       if (data?.releve) {
         const mapped: ReleveRow[] = data.releve.map((r: any) => {
+          const studentAbsence = absences.find((a: any) => a.etudiantId === r.utilisateurId);
           const cc = r.noteCC !== null && r.noteCC !== undefined ? String(r.noteCC) : '';
           const ex = r.noteExamen !== null && r.noteExamen !== undefined ? String(r.noteExamen) : '';
           const ra = r.noteRattrapage !== null && r.noteRattrapage !== undefined ? String(r.noteRattrapage) : '';
 
-          // Calcul prÃ©visualisation moyenne
+          // Calcul prévisualisation moyenne
           const notes = [r.noteCC, r.noteExamen, r.noteRattrapage]
             .filter(n => n !== null && n !== undefined) as number[];
           let moy: number | undefined;
@@ -74,7 +80,7 @@ export const SaisirNotes: React.FC = () => {
             moy = sorted.reduce((a, b) => a + b, 0) / sorted.length;
           }
 
-          // Rattrapage autorisÃ© si moyenne CC+Examen < 6
+          // Rattrapage autorisé si moyenne CC+Examen < 6
           let rattrapageAutorise = false;
           if (r.noteCC !== null && r.noteExamen !== null) {
             const moyInit = [r.noteCC, r.noteExamen].sort((a, b) => b - a).slice(0, 2)
@@ -95,45 +101,60 @@ export const SaisirNotes: React.FC = () => {
             evalIdRattrapage: r.evalIdRattrapage,
             moyenneCalculee: moy,
             rattrapageAutorise,
+            heuresAbsence: studentAbsence ? String(studentAbsence.heures) : '',
+            absenceId: studentAbsence?.id,
           };
         });
         setRows(mapped);
       } else {
-        // Fallback : charger les Ã©tudiants et construire un relevÃ© vide
+        // Fallback : charger les étudiants et construire un relevé vide
         const etudiants = await etudiantService.getAll();
-        setRows(etudiants.map(e => ({
-          utilisateurId: e.id,
-          nom: e.utilisateur?.nom ?? '',
-          prenom: e.prenom,
-          matricule: e.matricule,
-          noteCC: '', noteExamen: '', noteRattrapage: '',
-        })));
+        setRows(etudiants.map(e => {
+          const studentAbsence = absences.find((a: any) => a.etudiantId === e.id);
+          return {
+            utilisateurId: e.id,
+            nom: e.utilisateur?.nom ?? '',
+            prenom: e.prenom,
+            matricule: e.matricule,
+            noteCC: '', noteExamen: '', noteRattrapage: '',
+            heuresAbsence: studentAbsence ? String(studentAbsence.heures) : '',
+            absenceId: studentAbsence?.id,
+          };
+        }));
       }
     } catch (err: any) {
       // Fallback si l'endpoint releve n'existe pas encore
       try {
-        const etudiants = await etudiantService.getAll();
-        setRows(etudiants.map(e => ({
-          utilisateurId: e.id,
-          nom: e.utilisateur?.nom ?? '',
-          prenom: e.prenom,
-          matricule: e.matricule,
-          noteCC: '', noteExamen: '', noteRattrapage: '',
-        })));
+        const [etudiants, absences] = await Promise.all([
+          etudiantService.getAll(),
+          absenceService.getByMatiere(selectedMatiere).catch(() => [])
+        ]);
+        setRows(etudiants.map(e => {
+          const studentAbsence = absences.find((a: any) => a.etudiantId === e.id);
+          return {
+            utilisateurId: e.id,
+            nom: e.utilisateur?.nom ?? '',
+            prenom: e.prenom,
+            matricule: e.matricule,
+            noteCC: '', noteExamen: '', noteRattrapage: '',
+            heuresAbsence: studentAbsence ? String(studentAbsence.heures) : '',
+            absenceId: studentAbsence?.id,
+          };
+        }));
       } catch {
-        setError('Erreur lors du chargement du relevÃ©');
+        setError('Erreur lors du chargement du relevé');
       }
     } finally {
       setLoadingReleve(false);
     }
   };
 
-  const updateRow = (index: number, field: 'noteCC' | 'noteExamen' | 'noteRattrapage', value: string) => {
+  const updateRow = (index: number, field: 'noteCC' | 'noteExamen' | 'noteRattrapage' | 'heuresAbsence', value: string) => {
     setRows(prev => {
       const updated = [...prev];
       const row = { ...updated[index], [field]: value };
 
-      // Recalcul prÃ©visualisation
+      // Recalcul prévisualisation
       const cc = parseFloat(row.noteCC);
       const ex = parseFloat(row.noteExamen);
       const ra = parseFloat(row.noteRattrapage);
@@ -145,7 +166,7 @@ export const SaisirNotes: React.FC = () => {
         row.moyenneCalculee = undefined;
       }
 
-      // Rattrapage autorisÃ©
+      // Rattrapage autorisé
       if (!isNaN(cc) && !isNaN(ex)) {
         const moyInit = [cc, ex].sort((a, b) => b - a).slice(0, 2)
           .reduce((a, b) => a + b, 0) / 2;
@@ -167,14 +188,21 @@ export const SaisirNotes: React.FC = () => {
         if (val !== '' && val !== undefined) {
           const n = parseFloat(val);
           if (isNaN(n) || n < 0 || n > 20) {
-            setError(`Note invalide pour ${row.nom} ${row.prenom} : "${val}" (doit Ãªtre entre 0 et 20)`);
+            setError(`Note invalide pour ${row.nom} ${row.prenom} : "${val}" (doit être entre 0 et 20)`);
             return;
           }
         }
       }
-      // VÃ©rifier rattrapage
+      if (row.heuresAbsence !== '') {
+        const n = parseInt(row.heuresAbsence, 10);
+        if (isNaN(n) || n < 0) {
+          setError(`Heures d'absence invalides pour ${row.nom} ${row.prenom}`);
+          return;
+        }
+      }
+      // Vérifier rattrapage
       if (row.noteRattrapage !== '' && !row.rattrapageAutorise) {
-        setError(`Rattrapage non autorisÃ© pour ${row.nom} ${row.prenom} (moyenne initiale â‰¥ 6/20)`);
+        setError(`Rattrapage non autorisé pour ${row.nom} ${row.prenom} (moyenne initiale ≥ 6/20)`);
         return;
       }
     }
@@ -184,18 +212,69 @@ export const SaisirNotes: React.FC = () => {
       setError('');
       setSuccess('');
 
-      const notes = rows.map(row => ({
-        utilisateurId: row.utilisateurId,
-        noteCC: row.noteCC !== '' ? parseFloat(row.noteCC) : null,
-        noteExamen: row.noteExamen !== '' ? parseFloat(row.noteExamen) : null,
-        noteRattrapage: row.noteRattrapage !== '' ? parseFloat(row.noteRattrapage) : null,
-      }));
+      // ── 1. Sauvegarder les notes ───────────────────────────────────────────
+      // Filtrer uniquement les étudiants qui ont au moins une note saisie
+      const notesPayload = rows
+        .filter(row => row.noteCC !== '' || row.noteExamen !== '' || row.noteRattrapage !== '')
+        .map(row => ({
+          utilisateurId: row.utilisateurId,
+          noteCC: row.noteCC !== '' ? parseFloat(row.noteCC) : null,
+          noteExamen: row.noteExamen !== '' ? parseFloat(row.noteExamen) : null,
+          noteRattrapage: row.noteRattrapage !== '' ? parseFloat(row.noteRattrapage) : null,
+        }));
 
-      await evaluationService.saveReleve(selectedMatiere, user?.id ?? '', notes);
-      setSuccess(`RelevÃ© sauvegardÃ© â€” ${rows.length} Ã©tudiants mis Ã  jour`);
-      await fetchReleve(); // Recharger pour avoir les IDs et moyennes calculÃ©es
+      if (notesPayload.length > 0) {
+        try {
+          await evaluationService.saveReleve(selectedMatiere, user?.id ?? '', notesPayload);
+        } catch (saveErr: any) {
+          console.error('[saveReleve] Erreur:', saveErr.response?.data || saveErr.message);
+          throw saveErr;
+        }
+      }
+
+      // ── 2. Gérer les absences ──────────────────────────────────────────────
+      const absencePromises = rows.map(async row => {
+        const heures = row.heuresAbsence !== '' ? parseInt(row.heuresAbsence, 10) : NaN;
+        if (!isNaN(heures)) {
+          if (row.absenceId) {
+            if (heures === 0) {
+              await absenceService.delete(row.absenceId).catch(console.error);
+            } else {
+              await absenceService.update(row.absenceId, { heures }).catch(console.error);
+            }
+          } else if (heures > 0) {
+            await absenceService.create({
+              etudiantId: row.utilisateurId,
+              matiereId: selectedMatiere,
+              heures,
+              justifiee: false,
+              motif: ''
+            }).catch(console.error);
+          }
+        } else if (row.absenceId) {
+          // Champ vidé → supprimer l'absence existante
+          await absenceService.delete(row.absenceId).catch(console.error);
+        }
+      });
+      await Promise.all(absencePromises);
+
+      // ── 3. Recalculer les moyennes ─────────────────────────────────────────
+      await Promise.all(
+        rows.map(row =>
+          calculService.calculerMatiere(row.utilisateurId, selectedMatiere).catch(() => null)
+        )
+      );
+
+      setSuccess(`Relevé sauvegardé — ${rows.length} étudiants mis à jour`);
+      await fetchReleve();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de la sauvegarde');
+      console.error('[handleSave] Erreur complète:', err);
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Erreur lors de la sauvegarde';
+      setError(msg);
     } finally {
       setSaving(false);
     }
@@ -222,7 +301,7 @@ export const SaisirNotes: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Notes & Absences</h1>
             <p className="text-gray-500 text-sm mt-0.5">
-              Saisie en masse â€” toute la classe en une seule opÃ©ration
+              Saisie en masse — toute la classe en une seule opération
             </p>
           </div>
           <div className="flex gap-3">
@@ -261,27 +340,27 @@ export const SaisirNotes: React.FC = () => {
           </div>
         )}
 
-        {/* SÃ©lection matiÃ¨re */}
+        {/* Sélection matière */}
         <div className="bg-white rounded-xl shadow-md p-5 mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <BookOpen className="w-4 h-4 inline mr-1" />
-            MatiÃ¨re
+            Matière
           </label>
           <select
             value={selectedMatiere}
             onChange={e => setSelectedMatiere(e.target.value)}
             className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
           >
-            <option value="">SÃ©lectionner une matiÃ¨re</option>
+            <option value="">Sélectionner une matière</option>
             {matieres.map(m => (
               <option key={m.id} value={m.id}>
-                {m.libelle} â€” Coef. {m.coefficient} â€” {m.credits} crÃ©dits
+                {m.libelle} — Coef. {m.coefficient} — {m.credits} crédits
               </option>
             ))}
           </select>
           {matiere && (
             <p className="text-xs text-gray-500 mt-2">
-              {rows.length} Ã©tudiant(s) dans le relevÃ©
+              {rows.length} étudiant(s) dans le relevé
             </p>
           )}
         </div>
@@ -298,7 +377,7 @@ export const SaisirNotes: React.FC = () => {
                 <thead>
                   <tr className="bg-gray-50 border-b">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                      Ã‰tudiant
+                      Étudiant
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
                       Matricule
@@ -312,8 +391,11 @@ export const SaisirNotes: React.FC = () => {
                     <th className="px-4 py-3 text-center text-xs font-semibold text-amber-700 uppercase tracking-wide w-28">
                       Rattrapage
                     </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-red-700 uppercase tracking-wide w-24">
+                      Absences
+                    </th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide w-24">
-                      Moy. prÃ©vis.
+                      Moy. prévis.
                     </th>
                   </tr>
                 </thead>
@@ -333,7 +415,7 @@ export const SaisirNotes: React.FC = () => {
                           type="number" min="0" max="20" step="0.01"
                           value={row.noteCC}
                           onChange={e => updateRow(i, 'noteCC', e.target.value)}
-                          placeholder="â€”"
+                          placeholder="—"
                           className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                             row.noteCC ? 'border-blue-300 bg-blue-50' : 'border-gray-300'
                           }`}
@@ -346,7 +428,7 @@ export const SaisirNotes: React.FC = () => {
                           type="number" min="0" max="20" step="0.01"
                           value={row.noteExamen}
                           onChange={e => updateRow(i, 'noteExamen', e.target.value)}
-                          placeholder="â€”"
+                          placeholder="—"
                           className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                             row.noteExamen ? 'border-blue-300 bg-blue-50' : 'border-gray-300'
                           }`}
@@ -359,16 +441,29 @@ export const SaisirNotes: React.FC = () => {
                           type="number" min="0" max="20" step="0.01"
                           value={row.noteRattrapage}
                           onChange={e => updateRow(i, 'noteRattrapage', e.target.value)}
-                          placeholder="â€”"
+                          placeholder="—"
                           disabled={!row.rattrapageAutorise && !row.noteRattrapage}
-                          title={!row.rattrapageAutorise ? 'Rattrapage non autorisÃ© (moyenne â‰¥ 6)' : ''}
+                          title={!row.rattrapageAutorise ? 'Rattrapage non autorisé (moyenne ≥ 6)' : ''}
                           className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-40 disabled:cursor-not-allowed ${
                             row.noteRattrapage ? 'border-amber-300 bg-amber-50' : 'border-gray-300'
                           }`}
                         />
                       </td>
 
-                      {/* Moyenne prÃ©visualisation */}
+                      {/* Absences */}
+                      <td className="px-4 py-2.5">
+                        <input
+                          type="number" min="0" step="1"
+                          value={row.heuresAbsence}
+                          onChange={e => updateRow(i, 'heuresAbsence', e.target.value)}
+                          placeholder="0"
+                          className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent ${
+                            row.heuresAbsence ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                          }`}
+                        />
+                      </td>
+
+                      {/* Moyenne prévisualisation */}
                       <td className="px-4 py-2.5 text-center">
                         {row.moyenneCalculee !== undefined ? (
                           <span className={`font-bold text-sm ${
@@ -377,7 +472,7 @@ export const SaisirNotes: React.FC = () => {
                             {row.moyenneCalculee.toFixed(2)}
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-sm">â€”</span>
+                          <span className="text-gray-400 text-sm">—</span>
                         )}
                       </td>
                     </tr>
@@ -389,7 +484,7 @@ export const SaisirNotes: React.FC = () => {
             {/* Footer avec bouton save */}
             <div className="px-4 py-3 bg-gray-50 border-t flex items-center justify-between">
               <p className="text-xs text-gray-500">
-                {rows.filter(r => r.noteCC || r.noteExamen).length} / {rows.length} Ã©tudiants avec notes
+                {rows.filter(r => r.noteCC || r.noteExamen).length} / {rows.length} étudiants avec notes
               </p>
               <button
                 onClick={handleSave}
@@ -404,7 +499,7 @@ export const SaisirNotes: React.FC = () => {
         ) : selectedMatiere ? (
           <div className="bg-white rounded-xl shadow-md p-12 text-center">
             <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-500">Aucun Ã©tudiant trouvÃ© pour cette matiÃ¨re</p>
+            <p className="text-gray-500">Aucun étudiant trouvé pour cette matière</p>
           </div>
         ) : null}
       </div>

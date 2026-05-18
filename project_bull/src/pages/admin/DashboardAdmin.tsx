@@ -120,8 +120,8 @@ export const DashboardAdmin: React.FC = () => {
 
   const quickActions = [
     {
-      label: 'Notes & Absences',
-      description: 'Saisir les évaluations et gérer les absences',
+      label: 'Relevés de note',
+      description: 'Gérez les relevés',
       icon: Edit,
       color: 'blue',
       bg: 'bg-blue-100',

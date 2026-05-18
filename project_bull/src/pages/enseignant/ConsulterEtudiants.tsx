@@ -29,7 +29,7 @@ interface EtudiantWithStats extends Etudiant {
 export const ConsulterEtudiants: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [etudiants, setEtudiants] = useState<EtudiantWithStats[]>([]);
   const [matieres, setMatieres] = useState<Matiere[]>([]);
   const [selectedMatiere, setSelectedMatiere] = useState<string>('');
@@ -115,7 +115,7 @@ export const ConsulterEtudiants: React.FC = () => {
 
   const handleViewEtudiant = async (etudiant: EtudiantWithStats) => {
     setSelectedEtudiant(etudiant);
-    
+
     if (selectedMatiere) {
       try {
         const evaluations = await evaluationService.getByEtudiantAndMatiere(
@@ -127,7 +127,7 @@ export const ConsulterEtudiants: React.FC = () => {
         setEtudiantEvaluations([]);
       }
     }
-    
+
     setShowModal(true);
   };
 
@@ -281,18 +281,16 @@ export const ConsulterEtudiants: React.FC = () => {
                       {selectedMatiere && (
                         <>
                           <td className="px-6 py-4 text-center">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              etudiant.totalEvaluations > 0
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${etudiant.totalEvaluations > 0
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                              }`}>
                               {etudiant.totalEvaluations}/3
                             </span>
                           </td>
                           <td className="px-6 py-4 text-center">
-                            <span className={`font-medium ${
-                              etudiant.totalAbsences > 0 ? 'text-red-600' : 'text-green-600'
-                            }`}>
+                            <span className={`font-medium ${etudiant.totalAbsences > 0 ? 'text-red-600' : 'text-green-600'
+                              }`}>
                               {etudiant.totalAbsences}
                             </span>
                           </td>
@@ -309,13 +307,13 @@ export const ConsulterEtudiants: React.FC = () => {
                           </button>
                           <button
                             onClick={() => navigate('/enseignant/saisir-notes', {
-                              state: { 
+                              state: {
                                 matiereId: selectedMatiere,
-                                etudiantId: etudiant.id 
+                                etudiantId: etudiant.id
                               }
                             })}
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Saisir notes"
+                            title="Relevés"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
@@ -389,7 +387,7 @@ export const ConsulterEtudiants: React.FC = () => {
                           <div>
                             <span className="font-medium text-gray-900">
                               {evaluation.type === 'CC' ? 'Contrôle Continu' :
-                               evaluation.type === 'EXAMEN' ? 'Examen Final' : 'Rattrapage'}
+                                evaluation.type === 'EXAMEN' ? 'Examen Final' : 'Rattrapage'}
                             </span>
                             <p className="text-sm text-gray-600">
                               Saisi le {new Date(evaluation.dateSaisie).toLocaleDateString('fr-FR')}
@@ -418,22 +416,22 @@ export const ConsulterEtudiants: React.FC = () => {
                   onClick={() => {
                     setShowModal(false);
                     navigate('/enseignant/saisir-notes', {
-                      state: { 
+                      state: {
                         matiereId: selectedMatiere,
-                        etudiantId: selectedEtudiant.id 
+                        etudiantId: selectedEtudiant.id
                       }
                     });
                   }}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                 >
                   <Edit className="w-4 h-4" />
-                  Saisir Notes
+                  Relevés
                 </button>
               )}
             </div>
           </div>
         </div>
       )}
-  </EnseignantLayout>
-);
+    </EnseignantLayout>
+  );
 };

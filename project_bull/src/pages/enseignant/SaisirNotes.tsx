@@ -182,12 +182,12 @@ export const SaisirNotes: React.FC = () => {
         await evaluationService.saveReleve(selectedMatiere, user.id, payloadNotes);
       } catch (massErr) {
         console.warn("L'endpoint de sauvegarde en masse a échoué. Fallback sur sauvegarde individuelle.");
-        
+
         const promises: Promise<any>[] = [];
-        
+
         for (const ligne of lignesReleve) {
           const studentId = ligne.etudiant.id || ligne.etudiant.utilisateurId;
-          
+
           // Traitement CC
           if (ligne.cc !== '') {
             const note = parseFloat(ligne.cc);
@@ -203,7 +203,7 @@ export const SaisirNotes: React.FC = () => {
               }).catch(e => console.error(e)));
             }
           }
-          
+
           // Traitement Examen
           if (ligne.examen !== '') {
             const note = parseFloat(ligne.examen);
@@ -236,7 +236,7 @@ export const SaisirNotes: React.FC = () => {
             }
           }
         }
-        
+
         await Promise.all(promises);
       }
 
@@ -282,7 +282,7 @@ export const SaisirNotes: React.FC = () => {
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Saisir des Notes (Relevé)</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Relevés de Notes</h1>
               <p className="text-gray-600 mt-1">
                 Saisissez les notes de tous les étudiants simultanément
               </p>

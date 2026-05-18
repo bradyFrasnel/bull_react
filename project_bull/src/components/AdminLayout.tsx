@@ -68,19 +68,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       ],
     },
     {
-      label: 'Saisir Notes',
+      label: 'Gestion des relevés',
       icon: Edit,
       path: `${basePath}/saisir-notes`,
-    },
-    {
-      label: 'Absences',
-      icon: Clock,
-      path: `${basePath}/absences`,
-    },
-    {
-      label: 'Calculs & Validation',
-      icon: Calculator,
-      path: `${basePath}/calculs`,
     },
     {
       label: 'Bulletins',
@@ -103,9 +93,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } bg-gradient-to-b from-gray-900 to-gray-800 text-white transition-all duration-300 flex flex-col shadow-xl`}
+        className={`${sidebarOpen ? 'w-64' : 'w-20'
+          } bg-gradient-to-b from-gray-900 to-gray-800 text-white transition-all duration-300 flex flex-col shadow-xl`}
       >
         {/* Logo/Header */}
         <div className="h-24 flex items-center justify-between px-4 border-b border-gray-700">
@@ -133,11 +122,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     onClick={() =>
                       setExpandedMenu(expandedMenu === item.label ? null : item.label)
                     }
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
-                      expandedMenu === item.label
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${expandedMenu === item.label
                         ? 'bg-blue-600 text-white'
                         : 'hover:bg-gray-700 text-gray-300'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <item.icon className="w-4 h-4 flex-shrink-0" />
@@ -145,9 +133,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     </div>
                     {sidebarOpen && (
                       <ChevronDown
-                        className={`w-3 h-3 transition-transform ${
-                          expandedMenu === item.label ? 'rotate-180' : ''
-                        }`}
+                        className={`w-3 h-3 transition-transform ${expandedMenu === item.label ? 'rotate-180' : ''
+                          }`}
                       />
                     )}
                   </button>
@@ -157,11 +144,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                         <button
                           key={subitem.path}
                           onClick={() => navigate(subitem.path)}
-                          className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-all ${
-                            isActive(subitem.path)
+                          className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-all ${isActive(subitem.path)
                               ? 'bg-blue-500 text-white'
                               : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                          }`}
+                            }`}
                         >
                           {subitem.label}
                         </button>
@@ -172,11 +158,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               ) : (
                 <button
                   onClick={() => navigate(item.path!)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all ${
-                    isActive(item.path || '')
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all ${isActive(item.path || '')
                       ? 'bg-blue-600 text-white'
                       : 'hover:bg-gray-700 text-gray-300'
-                  }`}
+                    }`}
                 >
                   <item.icon className="w-4 h-4 flex-shrink-0" />
                   {sidebarOpen && <span className="text-xs font-medium">{item.label}</span>}

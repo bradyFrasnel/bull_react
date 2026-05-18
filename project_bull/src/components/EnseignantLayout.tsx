@@ -23,9 +23,9 @@ export const EnseignantLayout: React.FC<EnseignantLayoutProps> = ({ children }) 
 
   const navItems = [
     { label: 'Tableau de bord', icon: LayoutDashboard, path: '/enseignant/dashboard' },
-    { label: 'Saisir Notes',    icon: Edit,            path: '/enseignant/saisir-notes' },
-    { label: 'Mes Étudiants',   icon: Users,           path: '/enseignant/consulter-etudiants' },
-    { label: 'Mon Profil',      icon: User,            path: '/enseignant/profil' },
+    { label: 'Gestion des relevés', icon: Edit, path: '/enseignant/saisir-notes' },
+    { label: 'Mes Étudiants', icon: Users, path: '/enseignant/consulter-etudiants' },
+    { label: 'Mon Profil', icon: User, path: '/enseignant/profil' },
   ];
 
   return (
@@ -54,11 +54,10 @@ export const EnseignantLayout: React.FC<EnseignantLayoutProps> = ({ children }) 
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all ${
-                isActive(item.path)
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all ${isActive(item.path)
                   ? 'bg-blue-600 text-white'
                   : 'hover:bg-blue-700 text-blue-200'
-              }`}
+                }`}
             >
               <item.icon className="w-4 h-4 flex-shrink-0" />
               {sidebarOpen && <span className="text-xs font-medium">{item.label}</span>}
