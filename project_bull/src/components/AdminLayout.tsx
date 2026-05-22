@@ -68,7 +68,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       ],
     },
     {
-      label: 'Gestion des relevés',
+      label: 'Relevés de note',
       icon: Edit,
       path: `${basePath}/saisir-notes`,
     },
