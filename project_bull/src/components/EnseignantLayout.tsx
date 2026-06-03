@@ -23,7 +23,7 @@ export const EnseignantLayout: React.FC<EnseignantLayoutProps> = ({ children }) 
 
   const navItems = [
     { label: 'Tableau de bord', icon: LayoutDashboard, path: '/enseignant/dashboard' },
-    { label: 'Gestion des relevés', icon: Edit, path: '/enseignant/saisir-notes' },
+    { label: 'Relevés de notes', icon: Edit, path: '/enseignant/saisir-notes' },
     { label: 'Mes Étudiants', icon: Users, path: '/enseignant/consulter-etudiants' },
     { label: 'Mon Profil', icon: User, path: '/enseignant/profil' },
   ];
