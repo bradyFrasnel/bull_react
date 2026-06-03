@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "generic-react-ux-designer": {
+      "source": "travisjneuman/.claude",
+      "sourceType": "github",
+      "skillPath": "skills/generic-react-ux-designer/SKILL.md",
+      "computedHash": "884638a2ccca07743371cebf52d736921bef1c0e3b4548b5ba03d9c5931915a3"
+    }
+  }
+}

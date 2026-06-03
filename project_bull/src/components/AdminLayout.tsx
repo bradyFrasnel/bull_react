@@ -12,8 +12,6 @@ import {
   ChevronDown,
   Home,
   Edit,
-  Clock,
-  Calculator,
 } from 'lucide-react';
 import { AppBar } from './AppBar';
 
@@ -25,22 +23,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Sur mobile la sidebar est fermée par défaut, sur desktop ouverte
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
+  const handleLogout = () => { logout(); navigate('/'); };
   const isActive = (path: string) => location.pathname === path;
 
   const getBasePath = () => {
     const role = user?.role || 'admin';
     return role === 'secretariat' ? '/secretariat' : '/admin';
   };
-
   const basePath = getBasePath();
+
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    setMobileOpen(false); // ferme le drawer sur mobile après navigation
+  };
 
   const navigationItems = [
     {
@@ -59,28 +59,28 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       path: `${basePath}/etudiants`,
     },
     {
-      label: 'Gestion Académique',
+      label: 'Référentiel & Calculs',
       icon: FileText,
       submenu: [
-        { label: 'Semestres', path: `${basePath}/academique?tab=semestres` },
-        { label: 'Unités d\'Enseignement', path: `${basePath}/academique?tab=ue` },
-        { label: 'Matières', path: `${basePath}/academique?tab=matieres` },
+        { label: 'Semestres / UE / Matières', path: `${basePath}/academique` },
+        { label: 'Calculs & Validation', path: `${basePath}/calculs` },
       ],
     },
     {
-      label: 'Relevés de note',
+      label: 'Notes & Absences',
       icon: Edit,
-      path: `${basePath}/saisir-notes`,
+      submenu: [
+        { label: 'Saisir les Notes', path: `${basePath}/saisir-notes` },
+        { label: 'Gérer les Absences', path: `${basePath}/absences` },
+      ],
     },
     {
       label: 'Bulletins',
       icon: FileText,
-      path: `${basePath}/bulletins`,
-    },
-    {
-      label: 'Modèles Bulletins',
-      icon: FileText,
-      path: `${basePath}/modeles-bulletins`,
+      submenu: [
+        { label: 'Générer Bulletins', path: `${basePath}/bulletins` },
+        { label: 'Modèles', path: `${basePath}/modeles-bulletins` },
+      ],
     },
     {
       label: 'Profil',

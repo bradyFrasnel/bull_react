@@ -1,2 +1,2 @@
 // Le secrétariat réutilise le même composant que l'admin.
-export { GestionAbsences } from '../admin/GestionAbsences';
+export { GestionBulletins } from '../admin/GestionBulletins';

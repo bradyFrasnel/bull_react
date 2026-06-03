@@ -33,6 +33,9 @@ import { ModellesBulletins } from './pages/admin/ModellesBulletins';
 // Pages Secrétariat supplémentaires
 import { SaisirNotes as SaisirNotesSecretariat } from './pages/secretariat/SaisirNotes';
 import { GestionAbsences as GestionAbsencesSecretariat } from './pages/secretariat/GestionAbsences';
+import { GestionBulletins as GestionBulletinsSecretariat } from './pages/secretariat/GestionBulletins';
+import { ModellesBulletins as ModellesBulletinsSecretariat } from './pages/secretariat/ModellesBulletins';
+import { CalculsValidation as CalculsValidationSecretariat } from './pages/secretariat/CalculsValidation';
 
 function App() {
   return (
@@ -203,7 +206,7 @@ function App() {
             path="/secretariat/bulletins"
             element={
               <ProtectedRoute requiredRole="secretariat">
-                <GestionBulletins />
+                <GestionBulletinsSecretariat />
               </ProtectedRoute>
             }
           />
@@ -211,7 +214,7 @@ function App() {
             path="/secretariat/modeles-bulletins"
             element={
               <ProtectedRoute requiredRole="secretariat">
-                <ModellesBulletins />
+                <ModellesBulletinsSecretariat />
               </ProtectedRoute>
             }
           />
@@ -243,7 +246,7 @@ function App() {
             path="/secretariat/calculs"
             element={
               <ProtectedRoute requiredRole="secretariat">
-                <CalculsValidation />
+                <CalculsValidationSecretariat />
               </ProtectedRoute>
             }
           />
