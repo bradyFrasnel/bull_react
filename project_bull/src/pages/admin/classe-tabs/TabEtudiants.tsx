@@ -59,7 +59,7 @@ export const TabEtudiants: React.FC<TabEtudiantsProps> = ({ classeId }) => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {etudiants.map(etudiant => (
-              <tr key={etudiant.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={etudiant.utilisateurId || etudiant.matricule} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 text-sm font-mono text-gray-600">{etudiant.matricule}</td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">
                   {etudiant.utilisateur?.nom} {etudiant.prenom}

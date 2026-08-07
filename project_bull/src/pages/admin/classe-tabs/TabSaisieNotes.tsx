@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { evaluationService } from '../../../services/evaluation.service';
 import { absenceService } from '../../../services';
-import { Save, AlertCircle, Loader2, RefreshCw, Edit } from 'lucide-react';
+import { Save, AlertCircle, Loader2, RefreshCw, Edit, Download, Upload } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { Matiere } from '../../../types';
 
 interface TabSaisieNotesProps {
@@ -32,6 +33,7 @@ export const TabSaisieNotes: React.FC<TabSaisieNotesProps> = ({ classeId, classe
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Extraire toutes les matières des semestres de la classe
   useEffect(() => {
@@ -123,40 +125,116 @@ export const TabSaisieNotes: React.FC<TabSaisieNotesProps> = ({ classeId, classe
       setError('');
       setSuccess('');
 
-      for (const row of rows) {
-        if (row.noteCC) {
-          await evaluationService.saveNote({
-            etudiantId: row.utilisateurId,
-            matiereId: selectedMatiere,
-            type: 'CC',
-            note: Number(row.noteCC)
-          });
-        }
-        if (row.noteExamen) {
-          await evaluationService.saveNote({
-            etudiantId: row.utilisateurId,
-            matiereId: selectedMatiere,
-            type: 'EXAMEN',
-            note: Number(row.noteExamen)
-          });
-        }
-        if (row.noteRattrapage) {
-          await evaluationService.saveNote({
-            etudiantId: row.utilisateurId,
-            matiereId: selectedMatiere,
-            type: 'RATTRAPAGE',
-            note: Number(row.noteRattrapage)
-          });
-        }
-      }
+      const notesToSave = rows.map(row => ({
+        utilisateurId: row.utilisateurId,
+        noteCC: row.noteCC !== '' ? Number(row.noteCC) : null,
+        noteExamen: row.noteExamen !== '' ? Number(row.noteExamen) : null,
+        noteRattrapage: row.noteRattrapage !== '' ? Number(row.noteRattrapage) : null,
+      }));
+
+      await evaluationService.saveReleve(selectedMatiere, 'Système', notesToSave);
+
       setSuccess('Toutes les notes ont été enregistrées avec succès.');
       await fetchReleve();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
+      console.error(err);
       setError('Erreur lors de la sauvegarde des notes.');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleExportExcel = () => {
+    if (!selectedMatiere || rows.length === 0) return;
+
+    // Preparer les donnees pour Excel
+    const excelData = rows.map(r => ({
+      Matricule: r.matricule,
+      'Nom & Prénom': `${r.nom} ${r.prenom}`,
+      'Note CC (/20)': r.noteCC || '',
+      'Note Examen (/20)': r.noteExamen || '',
+      'Rattrapage (/20)': r.noteRattrapage || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Auto-ajuster la largeur des colonnes
+    const colWidths = [
+      { wch: 15 }, // Matricule
+      { wch: 30 }, // Nom & Prenom
+      { wch: 15 }, // Note CC
+      { wch: 15 }, // Note Examen
+      { wch: 15 }  // Rattrapage
+    ];
+    ws['!cols'] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Notes");
+
+    const matiereName = matieres.find(m => m.id === selectedMatiere)?.libelle || 'Matiere';
+    XLSX.writeFile(wb, `Releve_Notes_${matiereName.replace(/\s+/g, '_')}.xlsx`);
+  };
+
+  const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws) as any[];
+
+        let updatedCount = 0;
+        let ignoredCount = 0;
+
+        // Mettre a jour les rows existantes
+        setRows(prevRows => {
+          const newRows = [...prevRows];
+          data.forEach(row => {
+            const matricule = row['Matricule'];
+            if (!matricule) return;
+
+            const rowIndex = newRows.findIndex(r => r.matricule === matricule);
+            if (rowIndex !== -1) {
+              const parseNote = (val: any) => {
+                if (val === undefined || val === null || val === '') return '';
+                const num = Number(val);
+                return isNaN(num) || num < 0 || num > 20 ? '' : String(num);
+              };
+
+              newRows[rowIndex] = {
+                ...newRows[rowIndex],
+                noteCC: parseNote(row['Note CC (/20)']),
+                noteExamen: parseNote(row['Note Examen (/20)']),
+                noteRattrapage: parseNote(row['Rattrapage (/20)'])
+              };
+              updatedCount++;
+            } else {
+              ignoredCount++;
+            }
+          });
+          return newRows;
+        });
+
+        if (ignoredCount > 0) {
+          setSuccess(`Attention: ${ignoredCount} ligne(s) ignorée(s) le matricule n'existe pas dans cette classe.`);
+        } else {
+          setSuccess(`Notes importées avec succès pour ${updatedCount} étudiant(s). Vérifiez le tableau puis enregistrez.`);
+        }
+        setTimeout(() => setSuccess(''), 7000);
+      } catch (error) {
+        setError("Erreur lors de la lecture du fichier Excel. Assurez-vous d'utiliser le modèle exporté.");
+      }
+    };
+    reader.readAsBinaryString(file);
+
+    // Reset l'input pour permettre de reselectionner le meme fichier
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   if (matieres.length === 0) {
@@ -183,7 +261,7 @@ export const TabSaisieNotes: React.FC<TabSaisieNotesProps> = ({ classeId, classe
               onChange={(e) => setSelectedMatiere(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
             >
-              <option value="">-- Choisir une matière --</option>
+              <option value="">Choisir une matière</option>
               {matieres.map((m) => (
                 <option key={m.id} value={m.id}>{m.libelle} (Coef: {m.coefficient})</option>
               ))}
@@ -213,6 +291,27 @@ export const TabSaisieNotes: React.FC<TabSaisieNotesProps> = ({ classeId, classe
           <div className="flex justify-between items-center p-4 bg-gray-50 border-b border-gray-200">
             <h3 className="font-semibold text-gray-800">Relevé de la matière</h3>
             <div className="flex gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImportExcel}
+                accept=".xlsx, .xls"
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                title="Importer depuis Excel"
+              >
+                <Upload className="w-4 h-4" /> Importer
+              </button>
+              <button
+                onClick={handleExportExcel}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                title="Exporter le modèle Excel"
+              >
+                <Download className="w-4 h-4" /> Exporter
+              </button>
               <button
                 onClick={fetchReleve}
                 className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50"

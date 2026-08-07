@@ -15,7 +15,7 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
   const [recalculating, setRecalculating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   // States pour afficher des données
   const [statsData, setStatsData] = useState<any>(null);
   const [recapRows, setRecapRows] = useState<any[]>([]);
@@ -45,7 +45,7 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
       setLoading(true);
       setError("");
       setStatsData(null);
-      
+
       const raw = await bulletinService.getRecapPromotion(selectedSemestreId);
       if (raw?.etudiants) {
         setRecapRows(raw.etudiants);
@@ -103,7 +103,7 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
           <h2 className="text-xl font-bold text-gray-900">Résultats & Bulletins</h2>
           <p className="text-sm text-gray-500">Générez les bulletins et analysez les statistiques de la classe.</p>
         </div>
-        
+
         <button
           onClick={handleRecalculerPromotion}
           disabled={recalculating}
@@ -136,13 +136,13 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
             onChange={(e) => setSelectedSemestreId(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
           >
-            <option value="">-- Choisir un semestre --</option>
+            <option value="">Choisir un semestre</option>
             {semestres.map((s: any) => (
               <option key={s.id} value={s.id}>{s.libelle} ({s.anneeUniversitaire})</option>
             ))}
           </select>
         </div>
-        
+
         <div className="flex gap-2 w-full md:w-auto">
           <button
             onClick={handleGenererRecap}
@@ -218,7 +218,7 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
                     </td>
                     <td className="px-4 py-3 text-center">{row.creditsAcquis ?? '-'}</td>
                     <td className="px-4 py-3 text-right">
-                      <button 
+                      <button
                         onClick={() => printBulletinSemestre(row.etudiantId || row.id)}
                         className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded"
                       >

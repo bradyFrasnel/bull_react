@@ -19,7 +19,7 @@ export const TabAbsences: React.FC<TabAbsencesProps> = ({ classeId, classe }) =>
   const [showModal, setShowModal] = useState(false);
 
   const etudiants = classe?.etudiants || [];
-  
+
   // Extraire toutes les matières de la classe
   const matieres: Matiere[] = [];
   if (classe?.semestres) {
@@ -140,7 +140,7 @@ export const TabAbsences: React.FC<TabAbsencesProps> = ({ classeId, classe }) =>
               onChange={(e) => setSelectedEtudiant(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
             >
-              <option value="">-- Choisir un étudiant --</option>
+              <option value="">Choisir un étudiant</option>
               {etudiants.map((e: any) => (
                 <option key={e.utilisateurId} value={e.utilisateurId}>
                   {e.utilisateur?.nom} {e.prenom} ({e.matricule})
@@ -248,7 +248,7 @@ export const TabAbsences: React.FC<TabAbsencesProps> = ({ classeId, classe }) =>
                 ×
               </button>
             </div>
-            
+
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Étudiant *</label>
@@ -258,7 +258,7 @@ export const TabAbsences: React.FC<TabAbsencesProps> = ({ classeId, classe }) =>
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                   required
                 >
-                  <option value="">-- Choisir un étudiant --</option>
+                  <option value="">Choisir un étudiant</option>
                   {etudiants.map((e: any) => (
                     <option key={e.utilisateurId} value={e.utilisateurId}>
                       {e.utilisateur?.nom} {e.prenom}
@@ -275,7 +275,7 @@ export const TabAbsences: React.FC<TabAbsencesProps> = ({ classeId, classe }) =>
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                   required
                 >
-                  <option value="">-- Choisir une matière --</option>
+                  <option value="">Choisir une matière</option>
                   {matieres.map((m) => (
                     <option key={m.id} value={m.id}>{m.libelle}</option>
                   ))}

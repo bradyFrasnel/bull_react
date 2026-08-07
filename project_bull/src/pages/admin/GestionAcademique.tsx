@@ -9,7 +9,10 @@ interface SemesterI { id: string; libelle: string; code: string; anneeUniversita
 interface UEI { id: string; code: string; libelle: string; semestreId: string; }
 interface SubjectI { id: string; libelle: string; coefficient: number; credits: number; uniteEnseignementId: string; }
 
-type Tab = "semestres" | "ue" | "matieres" | "calculs";
+import { FilieresContent } from "./FilieresContent";
+import { ClassesContent } from "./ClassesContent";
+
+type Tab = "semestres" | "ue" | "matieres" | "filieres" | "classes" | "calculs";
 type ModalMode = "create" | "edit";
 
 export const GestionAcademique: React.FC = () => {
@@ -247,13 +250,15 @@ export const GestionAcademique: React.FC = () => {
         </div>
 
         {/* Onglets */}
-        <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
-          {(["semestres", "ue", "matieres", "calculs"] as const).map((tab) => (
+        <div className="flex flex-wrap gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
+          {(["semestres", "ue", "matieres", "filieres", "classes", "calculs"] as const).map((tab) => (
             <button key={tab} onClick={() => { setActiveTab(tab); setError(""); setSuccess(""); }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab ? "bg-white shadow text-blue-600" : "text-gray-600 hover:text-gray-900"}`}>
               {tab === "semestres" && "Semestres"}
               {tab === "ue" && "Unités d'Ens."}
               {tab === "matieres" && "Matières"}
+              {tab === "filieres" && "Filières"}
+              {tab === "classes" && "Classes"}
               {tab === "calculs" && "Calculs & Validation"}
             </button>
           ))}
@@ -263,7 +268,7 @@ export const GestionAcademique: React.FC = () => {
         {success && <div className="mb-4 flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg"><CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" /><p className="text-green-700 text-sm">{success}</p></div>}
 
         {/* Tables */}
-        {activeTab !== "calculs" && (
+        {activeTab !== "calculs" && activeTab !== "filieres" && activeTab !== "classes" && (
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
             {loading ? (
               <div className="flex justify-center items-center h-48"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
@@ -364,6 +369,19 @@ export const GestionAcademique: React.FC = () => {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Filières & Classes - Utilisation des composants extraits */}
+        {activeTab === "filieres" && (
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <FilieresContent />
+          </div>
+        )}
+
+        {activeTab === "classes" && (
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <ClassesContent />
           </div>
         )}
 
