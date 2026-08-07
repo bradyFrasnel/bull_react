@@ -1,5 +1,13 @@
 // Types pour les entités académiques
 
+export interface Filiere {
+  id: string;
+  nom: string;
+  code: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Semestre {
   id: string;
   code: string;
@@ -72,6 +80,20 @@ export interface Enseignant {
   matieres?: Matiere[];
 }
 
+export interface Classe {
+  id: string;
+  nom: string;
+  code: string;
+  anneeUniversitaire: string;
+  capaciteMax?: number;
+  filiereId?: string;
+  filiere?: Filiere;
+  _count?: {
+    etudiants: number;
+    semestres: number;
+  };
+}
+
 // Formulaires de création
 export interface CreateSemestreForm {
   libelle: string;
@@ -112,6 +134,11 @@ export interface CreateEnseignantForm {
   matricule: string;
   specialite: string;
   password: string;
+}
+
+export interface CreateFiliereForm {
+  nom: string;
+  code: string;
 }
 
 // Formulaires de mise à jour

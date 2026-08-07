@@ -1,49 +1,92 @@
+/**
+ * App.tsx — Composant racine et routeur principal de Bull React
+ *
+ * Ce fichier définit toute l'arborescence de navigation de l'application.
+ * Chaque route est protégée par le composant ProtectedRoute qui vérifie :
+ * 1. Que l'utilisateur est authentifié (token JWT valide)
+ * 2. Que son rôle correspond à la page demandée
+ *
+ * Structure des routes par rôle :
+ * ┌── / (Home — page d'accueil publique)
+ * ├── /login/:role (LoginForm — connexion par rôle)
+ * ├── /admin/* (10 pages admin)
+ * ├── /secretariat/* (10 pages secrétariat)
+ * ├── /enseignant/* (4 pages enseignant)
+ * └── /etudiant/* (4 pages étudiant)
+ *
+ * Le AuthProvider enveloppe toutes les routes pour fournir
+ * le contexte d'authentification à toute l'application.
+ */
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { Home } from './pages/Home';
-import { LoginForm } from './components/LoginForm';
-import { Dashboard } from './pages/Dashboard';
-import { DashboardAdmin } from './pages/admin/DashboardAdmin';
-import { GestionEnseignants } from './pages/admin/GestionEnseignants';
-import { GestionEtudiants } from './pages/admin/GestionEtudiants';
-import { GestionAcademique } from './pages/admin/GestionAcademique';
-import { ProfilePage } from './pages/admin/ProfilePage';
+
+// PAGES PUBLIQUES
+import { Home } from './pages/Home';                     // Page d'accueil avec choix du rôle
+import { LoginForm } from './components/LoginForm';       // Formulaire de connexion multi-rôles
+import { Dashboard } from './pages/Dashboard';            // Dashboard générique (redirection par rôle)
+
+// PAGES ADMINISTRATEUR
+import { DashboardAdmin } from './pages/admin/DashboardAdmin';           // Tableau de bord admin
+import { GestionEnseignants } from './pages/admin/GestionEnseignants';   // CRUD enseignants
+import { GestionEtudiants } from './pages/admin/GestionEtudiants';       // CRUD étudiants
+import { GestionAcademique } from './pages/admin/GestionAcademique';     // Gestion semestres/UE/matières
+import { ProfilePage } from './pages/admin/ProfilePage';                 // Profil admin
+import { GestionBulletins } from './pages/admin/GestionBulletins';       // Génération des bulletins
+import { ModellesBulletins } from './pages/admin/ModellesBulletins';     // Modèles de bulletins
+import { GestionClasses } from './pages/admin/GestionClasses';           // CRUD classes/promotions
+import { ClasseDetails } from './pages/admin/ClasseDetails';             // Page de détails d'une classe
+import { GestionFilieres } from './pages/admin/GestionFilieres';         // CRUD filières
+
+// PAGES SECRÉTARIAT
+// Les pages secrétariat sont des miroirs des pages admin avec les mêmes fonctionnalités
 import { DashboardSecretariat } from './pages/secretariat/DashboardSecretariat';
 import { GestionEnseignantsSecretariat } from './pages/secretariat/GestionEnseignantsSecretariat';
 import { GestionEtudiantsSecretariat } from './pages/secretariat/GestionEtudiantsSecretariat';
 import { GestionAcademiqueSecretariat } from './pages/secretariat/GestionAcademiqueSecretariat';
 import { ProfilePageSecretariat } from './pages/secretariat/ProfilePageSecretariat';
-// Pages Enseignant
-import { Dashboard as DashboardEnseignant } from './pages/enseignant/Dashboard';
-import { SaisirNotes } from './pages/enseignant/SaisirNotes';
-import { ConsulterEtudiants } from './pages/enseignant/ConsulterEtudiants';
-import { ProfileEnseignant } from './pages/enseignant/ProfileEnseignant';
-// Pages Étudiant
-import { DashboardEtudiant } from './pages/etudiant/Dashboard';
-import { ConsulterNotes } from './pages/etudiant/ConsulterNotes';
-import { Bulletins } from './pages/etudiant/Bulletins';
-import { ProfileEtudiant } from './pages/etudiant/ProfileEtudiant';
-// Pages Admin supplémentaires
-import { SaisirNotes as SaisirNotesAdmin } from './pages/admin/SaisirNotes';
-import { GestionAbsences } from './pages/admin/GestionAbsences';
-import { CalculsValidation } from './pages/admin/CalculsValidation';
-import { GestionBulletins } from './pages/admin/GestionBulletins';
-import { ModellesBulletins } from './pages/admin/ModellesBulletins';
-// Pages Secrétariat supplémentaires
-import { SaisirNotes as SaisirNotesSecretariat } from './pages/secretariat/SaisirNotes';
-import { GestionAbsences as GestionAbsencesSecretariat } from './pages/secretariat/GestionAbsences';
 import { GestionBulletins as GestionBulletinsSecretariat } from './pages/secretariat/GestionBulletins';
 import { ModellesBulletins as ModellesBulletinsSecretariat } from './pages/secretariat/ModellesBulletins';
-import { CalculsValidation as CalculsValidationSecretariat } from './pages/secretariat/CalculsValidation';
 
+// PAGES ENSEIGNANT
+import { Dashboard as DashboardEnseignant } from './pages/enseignant/Dashboard';     // Tableau de bord
+import { SaisirNotes } from './pages/enseignant/SaisirNotes';                        // Saisie des notes (ses matières uniquement)
+import { ConsulterEtudiants } from './pages/enseignant/ConsulterEtudiants';          // Consulter la liste des étudiants
+import { ProfileEnseignant } from './pages/enseignant/ProfileEnseignant';            // Profil enseignant
+// PAGES ÉTUDIANT
+import { DashboardEtudiant } from './pages/etudiant/Dashboard';          // Tableau de bord étudiant
+import { ConsulterNotes } from './pages/etudiant/ConsulterNotes';        // Consulter ses notes (lecture seule)
+import { Bulletins } from './pages/etudiant/Bulletins';                  // Consulter ses bulletins
+import { ProfileEtudiant } from './pages/etudiant/ProfileEtudiant';     // Profil étudiant
+
+/**
+ * Composant App — Point d'entrée de l'application React.
+ *
+ * Architecture :
+ * <Router>           → BrowserRouter pour la navigation côté client
+ *   <AuthProvider>   → Fournit le contexte d'authentification (user, login, logout)
+ *     <Routes>       → Définition de toutes les routes de l'application
+ *       <Route>      → Chaque route est protégée par ProtectedRoute si nécessaire
+ *     </Routes>
+ *   </AuthProvider>
+ * </Router>
+ */
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <Routes>
+          {/* ROUTES PUBLIQUES — Accessibles sans authentification */}
+
+          {/* Page d'accueil — choix du rôle de connexion */}
           <Route path="/" element={<Home />} />
+
+          {/* Formulaire de connexion — le rôle est passé en paramètre URL */}
+          {/* Ex: /login/etudiant, /login/admin, /login/enseignant, /login/secretariat */}
           <Route path="/login/:role" element={<LoginForm />} />
+
+          {/* Dashboard générique — redirige selon le rôle de l'utilisateur */}
           <Route
             path="/dashboard"
             element={
@@ -53,7 +96,7 @@ function App() {
             }
           />
 
-          {/* Admin Routes */}
+          {/* ROUTES ADMIN — Accessibles uniquement au rôle 'admin' */}
           <Route
             path="/admin/tableau-bord"
             element={
@@ -75,6 +118,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="admin">
                 <GestionEtudiants />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/filieres"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <GestionFilieres />
               </ProtectedRoute>
             }
           />
@@ -110,32 +161,25 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Page Gestion des Classes */}
           <Route
-            path="/admin/saisir-notes"
+            path="/admin/classes"
             element={
               <ProtectedRoute requiredRole="admin">
-                <SaisirNotesAdmin />
+                <GestionClasses />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/admin/absences"
+            path="/admin/classes/:id"
             element={
               <ProtectedRoute requiredRole="admin">
-                <GestionAbsences />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/calculs"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <CalculsValidation />
+                <ClasseDetails />
               </ProtectedRoute>
             }
           />
 
-          {/* Enseignant Routes */}
+          {/* ROUTES ENSEIGNANT — Accessibles uniquement au rôle 'enseignant' */}
           <Route
             path="/enseignant/dashboard"
             element={
@@ -169,7 +213,7 @@ function App() {
             }
           />
 
-          {/* Secretariat Routes */}
+          {/* ROUTES SECRÉTARIAT — Accessibles uniquement au rôle 'secretariat' */}
           <Route
             path="/secretariat/tableau-bord"
             element={
@@ -226,32 +270,25 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Page Gestion des Classes pour le secrétariat */}
           <Route
-            path="/secretariat/saisir-notes"
+            path="/secretariat/classes"
             element={
               <ProtectedRoute requiredRole="secretariat">
-                <SaisirNotesSecretariat />
+                <GestionClasses />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/secretariat/absences"
+            path="/secretariat/classes/:id"
             element={
               <ProtectedRoute requiredRole="secretariat">
-                <GestionAbsencesSecretariat />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/secretariat/calculs"
-            element={
-              <ProtectedRoute requiredRole="secretariat">
-                <CalculsValidationSecretariat />
+                <ClasseDetails />
               </ProtectedRoute>
             }
           />
 
-          {/* Etudiant Routes */}
+          {/* ROUTES ÉTUDIANT — Accessibles uniquement au rôle 'etudiant' */}
           <Route
             path="/etudiant/dashboard"
             element={
@@ -285,7 +322,8 @@ function App() {
             }
           />
 
-          {/* Generic routes (redirect based on role) */}
+          {/* ROUTES GÉNÉRIQUES */}
+          {/* Route générique de gestion — redirige selon le rôle */}
           <Route
             path="/gestion/tableau-bord"
             element={
@@ -295,6 +333,7 @@ function App() {
             }
           />
 
+          {/* Route catch-all — redirige toute URL inconnue vers la page d'accueil */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

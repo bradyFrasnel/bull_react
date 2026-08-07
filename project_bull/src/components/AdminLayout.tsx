@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Home,
   Edit,
+  Layers,
 } from 'lucide-react';
 import { AppBar } from './AppBar';
 
@@ -25,7 +26,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const location = useLocation();
   // Sur mobile la sidebar est fermée par défaut, sur desktop ouverte
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   const handleLogout = () => { logout(); navigate('/'); };
@@ -36,11 +36,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     return role === 'secretariat' ? '/secretariat' : '/admin';
   };
   const basePath = getBasePath();
-
-  const handleNavClick = (path: string) => {
-    navigate(path);
-    setMobileOpen(false); // ferme le drawer sur mobile après navigation
-  };
 
   const navigationItems = [
     {
@@ -59,28 +54,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       path: `${basePath}/etudiants`,
     },
     {
-      label: 'Référentiel & Calculs',
-      icon: FileText,
-      submenu: [
-        { label: 'Semestres / UE / Matières', path: `${basePath}/academique` },
-        { label: 'Calculs & Validation', path: `${basePath}/calculs` },
-      ],
+      label: 'Gestion des Classes',
+      icon: Layers,
+      path: `${basePath}/classes`,
     },
     {
-      label: 'Notes & Absences',
-      icon: Edit,
-      submenu: [
-        { label: 'Saisir les Notes', path: `${basePath}/saisir-notes` },
-        { label: 'Gérer les Absences', path: `${basePath}/absences` },
-      ],
+      label: 'Gestion des Filières',
+      icon: BookOpen,
+      path: `${basePath}/filieres`,
     },
     {
-      label: 'Bulletins',
+      label: 'Référentiel Académique',
       icon: FileText,
-      submenu: [
-        { label: 'Générer Bulletins', path: `${basePath}/bulletins` },
-        { label: 'Modèles', path: `${basePath}/modeles-bulletins` },
-      ],
+      path: `${basePath}/academique`,
+    },
+    {
+      label: 'Modèles Bulletins',
+      icon: FileText,
+      path: `${basePath}/modeles-bulletins`,
     },
     {
       label: 'Profil',
@@ -100,15 +91,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         <div className="h-24 flex items-center justify-between px-4 border-b border-gray-700">
           {sidebarOpen && (
             <div>
-              <h1 className="text-base font-bold">Bull ASUR</h1>
-              <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+              <h1 className="text-lg font-bold text-white">Bull ASUR</h1>
+              <p className="text-xs text-gray-400 capitalize mt-0.5">{user?.role}</p>
             </div>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-700 rounded-lg transition-all duration-200 hover:scale-110"
           >
-            {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
@@ -122,30 +113,30 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                     onClick={() =>
                       setExpandedMenu(expandedMenu === item.label ? null : item.label)
                     }
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${expandedMenu === item.label
-                        ? 'bg-blue-600 text-white'
-                        : 'hover:bg-gray-700 text-gray-300'
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 ${expandedMenu === item.label
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'hover:bg-gray-700 text-gray-300 hover:text-white'
                       }`}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <item.icon className="w-4 h-4 flex-shrink-0" />
-                      {sidebarOpen && <span className="text-xs font-medium">{item.label}</span>}
+                    <div className="flex items-center gap-3">
+                      <item.icon className="w-5 h-5 flex-shrink-0" />
+                      {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
                     </div>
                     {sidebarOpen && (
                       <ChevronDown
-                        className={`w-3 h-3 transition-transform ${expandedMenu === item.label ? 'rotate-180' : ''
+                        className={`w-4 h-4 transition-transform duration-200 ${expandedMenu === item.label ? 'rotate-180' : ''
                           }`}
                       />
                     )}
                   </button>
                   {sidebarOpen && expandedMenu === item.label && (
-                    <div className="ml-3 space-y-0.5 mt-1">
+                    <div className="ml-4 space-y-1 mt-1">
                       {item.submenu.map((subitem) => (
                         <button
                           key={subitem.path}
                           onClick={() => navigate(subitem.path)}
-                          className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-all ${isActive(subitem.path)
-                              ? 'bg-blue-500 text-white'
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${isActive(subitem.path)
+                              ? 'bg-blue-500 text-white shadow-sm'
                               : 'text-gray-400 hover:text-white hover:bg-gray-700'
                             }`}
                         >
@@ -158,13 +149,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               ) : (
                 <button
                   onClick={() => navigate(item.path!)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all ${isActive(item.path || '')
-                      ? 'bg-blue-600 text-white'
-                      : 'hover:bg-gray-700 text-gray-300'
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive(item.path || '')
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'hover:bg-gray-700 text-gray-300 hover:text-white'
                     }`}
                 >
-                  <item.icon className="w-4 h-4 flex-shrink-0" />
-                  {sidebarOpen && <span className="text-xs font-medium">{item.label}</span>}
+                  <item.icon className="w-5 h-5 flex-shrink-0" />
+                  {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
                 </button>
               )}
             </div>
@@ -172,19 +163,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </nav>
 
         {/* User Section */}
-        <div className="border-t border-gray-700 p-3 space-y-2">
+        <div className="border-t border-gray-700 p-4 space-y-3">
           {sidebarOpen && (
-            <div className="px-2 py-2 bg-gray-700 rounded-lg">
-              <p className="text-xs font-medium truncate">{user?.prenom || user?.nom}</p>
-              <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+            <div className="px-3 py-3 bg-gray-700/50 rounded-lg border border-gray-600">
+              <p className="text-sm font-semibold text-white truncate">{user?.prenom || user?.nom}</p>
+              <p className="text-xs text-gray-400 truncate mt-0.5">{user?.email}</p>
             </div>
           )}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-gray-300 hover:text-white"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-600 transition-all duration-200 text-gray-300 hover:text-white group"
           >
-            <LogOut className="w-4 h-4 flex-shrink-0" />
-            {sidebarOpen && <span className="text-xs font-medium">Déconnexion</span>}
+            <LogOut className="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform" />
+            {sidebarOpen && <span className="text-sm font-medium">Déconnexion</span>}
           </button>
         </div>
       </aside>

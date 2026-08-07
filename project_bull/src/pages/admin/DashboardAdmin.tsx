@@ -159,8 +159,11 @@ export const DashboardAdmin: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <p className="text-gray-600 mt-1">
-            Attension : vous êtes connectés en tant qu'administrateur, toutes actions effectuées peut être decisive .
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {isAdmin ? 'Tableau de bord Administrateur' : 'Tableau de bord Secrétariat'}
+          </h1>
+          <p className="text-gray-600">
+            Vue d'ensemble de l'activité académique et gestion des données
           </p>
         </div>
 
@@ -179,19 +182,21 @@ export const DashboardAdmin: React.FC = () => {
               <button
                 key={card.label}
                 onClick={card.action}
-                className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all hover:scale-105 transform text-left"
+                className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 transform text-left group border border-gray-100 hover:border-gray-200"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-500 text-sm font-medium">{card.label}</p>
-                    <p className={`text-4xl font-bold mt-2 ${card.text}`}>
+                    <p className="text-gray-500 text-sm font-medium uppercase tracking-wide">
+                      {card.label}
+                    </p>
+                    <p className={`text-4xl font-bold mt-2 ${card.text} group-hover:scale-110 transition-transform`}>
                       {loading
                         ? <Loader2 className="w-8 h-8 animate-spin inline" />
-                        : card.value
+                        : card.value.toLocaleString()
                       }
                     </p>
                   </div>
-                  <div className={`p-4 rounded-xl ${card.bg}`}>
+                  <div className={`p-4 rounded-xl ${card.bg} group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className={`w-8 h-8 ${card.text}`} />
                   </div>
                 </div>
@@ -202,7 +207,7 @@ export const DashboardAdmin: React.FC = () => {
 
         {/* Actions rapides */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Actions Rapides</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Actions Rapides</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {quickActions.map((action) => {
               const Icon = action.icon;
@@ -210,13 +215,13 @@ export const DashboardAdmin: React.FC = () => {
                 <button
                   key={action.label}
                   onClick={action.action}
-                  className={`bg-white p-5 rounded-xl border-2 border-gray-200 ${action.border} hover:shadow-md transition-all text-left`}
+                  className={`bg-white p-6 rounded-xl border-2 border-gray-200 ${action.border} hover:shadow-lg transition-all duration-300 hover:scale-105 transform text-left group`}
                 >
-                  <div className={`w-12 h-12 ${action.bg} rounded-xl flex items-center justify-center mb-3`}>
-                    <Icon className={`w-6 h-6 ${action.text}`} />
+                  <div className={`w-14 h-14 ${action.bg} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className={`w-7 h-7 ${action.text}`} />
                   </div>
-                  <h3 className="font-semibold text-gray-900">{action.label}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{action.description}</p>
+                  <h3 className="font-semibold text-gray-900 text-lg">{action.label}</h3>
+                  <p className="text-sm text-gray-500 mt-2">{action.description}</p>
                 </button>
               );
             })}
@@ -225,76 +230,84 @@ export const DashboardAdmin: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gestion des utilisateurs */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" />
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Users className="w-6 h-6 text-blue-600" />
               Gestion des Utilisateurs
             </h2>
             <div className="space-y-3">
               <button
                 onClick={() => navigate(`${basePath}/etudiants`)}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors group"
+                className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-blue-50 transition-colors group border border-gray-100 hover:border-blue-200"
               >
                 <div className="flex items-center gap-3">
-                  <GraduationCap className="w-5 h-5 text-blue-500" />
+                  <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                    <GraduationCap className="w-5 h-5 text-blue-600" />
+                  </div>
                   <span className="text-gray-700 group-hover:text-blue-700 font-medium">
                     Étudiants
                   </span>
                 </div>
                 <span className="text-2xl font-bold text-blue-600">
-                  {loading ? '0' : stats.totalEtudiants}
+                  {loading ? '0' : stats.totalEtudiants.toLocaleString()}
                 </span>
               </button>
               <button
                 onClick={() => navigate(`${basePath}/enseignants`)}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-green-50 transition-colors group"
+                className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-green-50 transition-colors group border border-gray-100 hover:border-green-200"
               >
                 <div className="flex items-center gap-3">
-                  <Users className="w-5 h-5 text-green-500" />
+                  <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+                    <Users className="w-5 h-5 text-green-600" />
+                  </div>
                   <span className="text-gray-700 group-hover:text-green-700 font-medium">
                     Enseignants
                   </span>
                 </div>
                 <span className="text-2xl font-bold text-green-600">
-                  {loading ? '0' : stats.totalEnseignants}
+                  {loading ? '0' : stats.totalEnseignants.toLocaleString()}
                 </span>
               </button>
             </div>
           </div>
 
-          {/* RÃ©fÃ©rentiel acadÃ©mique */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-amber-600" />
+          {/* Référentiel académique */}
+          <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <BookOpen className="w-6 h-6 text-amber-600" />
               Référentiel Académique
             </h2>
             <div className="space-y-3">
               <button
                 onClick={() => navigate(`${basePath}/academique`)}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-amber-50 transition-colors group"
+                className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-amber-50 transition-colors group border border-gray-100 hover:border-amber-200"
               >
                 <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-amber-500" />
+                  <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
+                    <FileText className="w-5 h-5 text-amber-600" />
+                  </div>
                   <span className="text-gray-700 group-hover:text-amber-700 font-medium">
                     Semestres
                   </span>
                 </div>
                 <span className="text-2xl font-bold text-amber-600">
-                  {loading ? '0' : stats.totalSemestres}
+                  {loading ? '0' : stats.totalSemestres.toLocaleString()}
                 </span>
               </button>
               <button
                 onClick={() => navigate(`${basePath}/academique`)}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-purple-50 transition-colors group"
+                className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-purple-50 transition-colors group border border-gray-100 hover:border-purple-200"
               >
                 <div className="flex items-center gap-3">
-                  <BookOpen className="w-5 h-5 text-purple-500" />
+                  <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                    <BookOpen className="w-5 h-5 text-purple-600" />
+                  </div>
                   <span className="text-gray-700 group-hover:text-purple-700 font-medium">
                     Matières
                   </span>
                 </div>
                 <span className="text-2xl font-bold text-purple-600">
-                  {loading ? '0' : stats.totalMatieres}
+                  {loading ? '0' : stats.totalMatieres.toLocaleString()}
                 </span>
               </button>
             </div>

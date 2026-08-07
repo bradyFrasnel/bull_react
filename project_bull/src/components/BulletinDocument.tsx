@@ -1,4 +1,4 @@
-﻿/**
+/**
  * BulletinDocument — Rendu fidèle aux modèles INPTIC LP ASUR
  * Ref : assets/images/Ex_BulletinS5.png / Ex_BulletinS6.png / Ex_BullAnnuel.png
  */
@@ -39,16 +39,16 @@ export interface BulletinAnnuelData {
 }
 export type BulletinData = BulletinSemestreData | BulletinAnnuelData;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const fmt = (n?: number) => (n !== undefined ? n.toFixed(2) : "—");
+// Helpers
+const fmt = (n?: number | null) => (n != null ? Number(n).toFixed(2) : "—");
 const noteStyle = (n?: number): React.CSSProperties => ({
   color: n === undefined ? "#9ca3af" : n >= 10 ? "#15803d" : "#dc2626",
   fontWeight: n !== undefined ? 600 : 400,
 });
-const DECISIONS: Record<string,string> = { DIPLOME:"DIPLÔMÉ(E)", REPRISE_SOUTENANCE:"REPRISE DE SOUTENANCE", REDOUBLE:"REDOUBLE LA LICENCE 3" };
-const MENTIONS: Record<string,string> = { TRES_BIEN:"Très Bien", BIEN:"Bien", ASSEZ_BIEN:"Assez Bien", PASSABLE:"Passable" };
+const DECISIONS: Record<string, string> = { DIPLOME: "DIPLÔMÉ(E)", REPRISE_SOUTENANCE: "REPRISE DE SOUTENANCE", REDOUBLE: "REDOUBLE LA LICENCE 3" };
+const MENTIONS: Record<string, string> = { TRES_BIEN: "Très Bien", BIEN: "Bien", ASSEZ_BIEN: "Assez Bien", PASSABLE: "Passable" };
 
-// ─── Styles inline (résistants à Tailwind purge + impression) ─────────────────
+// Styles inline (résistants à Tailwind purge + impression)
 const S = {
   doc: { border: "2px solid #1f2937", fontFamily: "Arial, sans-serif", fontSize: "11px", backgroundColor: "#fff" } as React.CSSProperties,
   headerGrid: { display: "grid", gridTemplateColumns: "110px 1fr 110px", alignItems: "center", padding: "10px 12px", gap: "8px", borderBottom: "2px solid #374151" } as React.CSSProperties,
@@ -71,7 +71,7 @@ const S = {
   footer: { backgroundColor: "#d1d5db", borderTop: "2px solid #6b7280", padding: "4px 12px", display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "9px", color: "#374151" } as React.CSSProperties,
 };
 
-// ─── En-tête institutionnel ───────────────────────────────────────────────────
+// En-tête institutionnel
 const EnTete: React.FC<{ titre: string; sousTitre?: string; annee: string; titleBg?: string }> = ({ titre, sousTitre, annee, titleBg = "#4f46e5" }) => (
   <div style={{ borderBottom: "2px solid #374151" }}>
     <div style={S.headerGrid}>
@@ -92,19 +92,19 @@ const EnTete: React.FC<{ titre: string; sousTitre?: string; annee: string; title
   </div>
 );
 
-// ─── Infos étudiant ───────────────────────────────────────────────────────────
-const InfosEtudiant: React.FC<{ nom: string; prenom: string; matricule: string; dateNaissance?: string; lieuNaissance?: string; extra?: {label:string;value:string}[] }> = ({ nom, prenom, matricule, dateNaissance, lieuNaissance, extra }) => (
+// Infos étudiant
+const InfosEtudiant: React.FC<{ nom: string; prenom: string; matricule: string; dateNaissance?: string; lieuNaissance?: string; extra?: { label: string; value: string }[] }> = ({ nom, prenom, matricule, dateNaissance, lieuNaissance, extra }) => (
   <div style={S.infoRow}>
     <div style={S.infoCell}><span style={S.infoLabel}>Nom :</span><span style={S.infoValue}>{nom}</span></div>
     <div style={S.infoCell}><span style={S.infoLabel}>Prénom :</span><span style={S.infoValue}>{prenom}</span></div>
     <div style={S.infoCell}><span style={S.infoLabel}>Matricule :</span><span style={S.infoValue}>{matricule}</span></div>
     {dateNaissance && <div style={S.infoCell}><span style={S.infoLabel}>Date naiss. :</span><span style={S.infoValue}>{new Date(dateNaissance).toLocaleDateString("fr-FR")}</span></div>}
     {lieuNaissance && <div style={S.infoCell}><span style={S.infoLabel}>Lieu naiss. :</span><span style={S.infoValue}>{lieuNaissance}</span></div>}
-    {extra?.map(({label,value}) => <div key={label} style={S.infoCell}><span style={S.infoLabel}>{label} :</span><span style={S.infoValue}>{value}</span></div>)}
+    {extra?.map(({ label, value }) => <div key={label} style={S.infoCell}><span style={S.infoLabel}>{label} :</span><span style={S.infoValue}>{value}</span></div>)}
   </div>
 );
 
-// ─── Tableau UE ───────────────────────────────────────────────────────────────
+//  Tableau UE
 const TableauUE: React.FC<{ ue: UEData }> = ({ ue }) => (
   <div style={{ margin: "0 12px 10px" }}>
     <div style={S.ueHeader}>
@@ -120,14 +120,14 @@ const TableauUE: React.FC<{ ue: UEData }> = ({ ue }) => (
     <table style={S.table}>
       <thead>
         <tr>
-          <th style={{...S.thLeft, width:"35%"}}>Matière</th>
-          <th style={{...S.th, width:"7%"}}>Coef.</th>
-          <th style={{...S.th, width:"8%"}}>Crédits</th>
-          <th style={{...S.th, width:"10%"}}>CC</th>
-          <th style={{...S.th, width:"10%"}}>Examen</th>
-          <th style={{...S.th, width:"12%"}}>Rattrapage</th>
-          <th style={{...S.th, width:"10%"}}>Moyenne</th>
-          <th style={{...S.th, width:"8%"}}>Absences</th>
+          <th style={{ ...S.thLeft, width: "35%" }}>Matière</th>
+          <th style={{ ...S.th, width: "7%" }}>Coef.</th>
+          <th style={{ ...S.th, width: "8%" }}>Crédits</th>
+          <th style={{ ...S.th, width: "10%" }}>CC</th>
+          <th style={{ ...S.th, width: "10%" }}>Examen</th>
+          <th style={{ ...S.th, width: "12%" }}>Rattrapage</th>
+          <th style={{ ...S.th, width: "10%" }}>Moyenne</th>
+          <th style={{ ...S.th, width: "8%" }}>Absences</th>
         </tr>
       </thead>
       <tbody>
@@ -136,10 +136,10 @@ const TableauUE: React.FC<{ ue: UEData }> = ({ ue }) => (
             <td style={S.tdLeft}>{m.libelle}</td>
             <td style={S.td}>{m.coefficient}</td>
             <td style={S.td}>{m.credits}</td>
-            <td style={{...S.td, ...noteStyle(m.cc)}}>{fmt(m.cc)}</td>
-            <td style={{...S.td, ...noteStyle(m.examen)}}>{fmt(m.examen)}</td>
-            <td style={{...S.td, ...noteStyle(m.rattrapage)}}>{fmt(m.rattrapage)}</td>
-            <td style={{...S.td, ...noteStyle(m.moyenne), fontWeight: 700}}>{fmt(m.moyenne)}</td>
+            <td style={{ ...S.td, ...noteStyle(m.cc) }}>{fmt(m.cc)}</td>
+            <td style={{ ...S.td, ...noteStyle(m.examen) }}>{fmt(m.examen)}</td>
+            <td style={{ ...S.td, ...noteStyle(m.rattrapage) }}>{fmt(m.rattrapage)}</td>
+            <td style={{ ...S.td, ...noteStyle(m.moyenne), fontWeight: 700 }}>{fmt(m.moyenne)}</td>
             <td style={S.td}>{m.absences !== undefined ? `${m.absences}h` : "—"}</td>
           </tr>
         ))}
@@ -148,7 +148,7 @@ const TableauUE: React.FC<{ ue: UEData }> = ({ ue }) => (
   </div>
 );
 
-// ─── Résultat semestre ────────────────────────────────────────────────────────
+//  Résultat semestre
 const ResultatSemestre: React.FC<{ valide?: boolean; moyenne?: number; creditsAcquis: number; creditsTotal: number }> = ({ valide, moyenne, creditsAcquis, creditsTotal }) => (
   <div style={S.resultBand(valide)}>
     <div>
@@ -164,7 +164,7 @@ const ResultatSemestre: React.FC<{ valide?: boolean; moyenne?: number; creditsAc
   </div>
 );
 
-// ─── Statistiques ─────────────────────────────────────────────────────────────
+//  Statistiques
 const Statistiques: React.FC<{ stats: StatistiquesData }> = ({ stats }) => (
   <div style={S.statsBand}>
     <div style={{ backgroundColor: "#bfdbfe", padding: "3px 10px", fontSize: "10px", fontWeight: 700, color: "#1e3a8a", borderBottom: "1px solid #93c5fd" }}>STATISTIQUES DE PROMOTION</div>
@@ -179,7 +179,7 @@ const Statistiques: React.FC<{ stats: StatistiquesData }> = ({ stats }) => (
   </div>
 );
 
-// ─── Signatures ───────────────────────────────────────────────────────────────
+// Signatures
 const Signatures: React.FC = () => (
   <div style={S.sigGrid}>
     {["Le Directeur des Études", "Le Chef de Département", "Le Directeur"].map(titre => (
@@ -192,7 +192,7 @@ const Signatures: React.FC = () => (
   </div>
 );
 
-// ─── Pied de page ─────────────────────────────────────────────────────────────
+// Pied de page
 const PiedDePage: React.FC<{ date?: string }> = ({ date }) => (
   <div style={S.footer}>
     <span>INPTIC — LP ASUR</span>
@@ -200,7 +200,7 @@ const PiedDePage: React.FC<{ date?: string }> = ({ date }) => (
   </div>
 );
 
-// ─── Composant principal ──────────────────────────────────────────────────────
+// Composant principal
 export const BulletinDocument: React.FC<{ data: BulletinData }> = ({ data }) => {
   if (data.type === "semestre") {
     const d = data as BulletinSemestreData;
@@ -241,7 +241,7 @@ export const BulletinDocument: React.FC<{ data: BulletinData }> = ({ data }) => 
       </div>
 
       <InfosEtudiant nom={d.etudiant.nom} prenom={d.etudiant.prenom} matricule={d.etudiant.matricule} dateNaissance={d.etudiant.dateNaissance} lieuNaissance={d.etudiant.lieuNaissance}
-        extra={[...(d.etudiant.bacType?[{label:"Type BAC",value:d.etudiant.bacType}]:[]),...(d.etudiant.anneeBac?[{label:"Année BAC",value:String(d.etudiant.anneeBac)}]:[]),...(d.etudiant.provenance?[{label:"Provenance",value:d.etudiant.provenance}]:[])]} />
+        extra={[...(d.etudiant.bacType ? [{ label: "Type BAC", value: d.etudiant.bacType }] : []), ...(d.etudiant.anneeBac ? [{ label: "Année BAC", value: String(d.etudiant.anneeBac) }] : []), ...(d.etudiant.provenance ? [{ label: "Provenance", value: d.etudiant.provenance }] : [])]} />
 
       <div style={{ padding: "10px 12px 0" }}>
         {/* Récap semestriel */}
@@ -250,19 +250,19 @@ export const BulletinDocument: React.FC<{ data: BulletinData }> = ({ data }) => 
           <table style={S.table}>
             <thead>
               <tr>
-                <th style={{...S.thLeft, backgroundColor: "#cffafe"}}>Semestre</th>
-                <th style={{...S.th, backgroundColor: "#cffafe"}}>Moyenne</th>
-                <th style={{...S.th, backgroundColor: "#cffafe"}}>Crédits acquis</th>
-                <th style={{...S.th, backgroundColor: "#cffafe"}}>Décision</th>
+                <th style={{ ...S.thLeft, backgroundColor: "#cffafe" }}>Semestre</th>
+                <th style={{ ...S.th, backgroundColor: "#cffafe" }}>Moyenne</th>
+                <th style={{ ...S.th, backgroundColor: "#cffafe" }}>Crédits acquis</th>
+                <th style={{ ...S.th, backgroundColor: "#cffafe" }}>Décision</th>
               </tr>
             </thead>
             <tbody>
               {[d.semestre5, d.semestre6].map((sem, i) => sem && (
                 <tr key={i} style={{ backgroundColor: i % 2 === 0 ? "#fff" : "#f0fdfe" }}>
                   <td style={S.tdLeft}>{sem.libelle}</td>
-                  <td style={{...S.td, ...noteStyle(sem.moyenne), fontWeight: 700}}>{fmt(sem.moyenne)}/20</td>
+                  <td style={{ ...S.td, ...noteStyle(sem.moyenne), fontWeight: 700 }}>{fmt(sem.moyenne)}/20</td>
                   <td style={S.td}>{sem.creditsAcquis}/{sem.creditsTotal}</td>
-                  <td style={{...S.td, fontWeight: 700, color: sem.valide ? "#15803d" : "#dc2626"}}>{sem.valide ? "VALIDÉ" : "NON VALIDÉ"}</td>
+                  <td style={{ ...S.td, fontWeight: 700, color: sem.valide ? "#15803d" : "#dc2626" }}>{sem.valide ? "VALIDÉ" : "NON VALIDÉ"}</td>
                 </tr>
               ))}
             </tbody>

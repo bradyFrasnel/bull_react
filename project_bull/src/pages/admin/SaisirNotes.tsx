@@ -212,7 +212,7 @@ export const SaisirNotes: React.FC = () => {
       setError('');
       setSuccess('');
 
-      // ── 1. Sauvegarder les notes ───────────────────────────────────────────
+      // 1. Sauvegarder les notes
       // Filtrer uniquement les étudiants qui ont au moins une note saisie
       const notesPayload = rows
         .filter(row => row.noteCC !== '' || row.noteExamen !== '' || row.noteRattrapage !== '')
@@ -232,7 +232,7 @@ export const SaisirNotes: React.FC = () => {
         }
       }
 
-      // ── 2. Gérer les absences ──────────────────────────────────────────────
+      // 2. Gérer les absences
       const absencePromises = rows.map(async row => {
         const heures = row.heuresAbsence !== '' ? parseInt(row.heuresAbsence, 10) : NaN;
         if (!isNaN(heures)) {
@@ -258,7 +258,7 @@ export const SaisirNotes: React.FC = () => {
       });
       await Promise.all(absencePromises);
 
-      // ── 3. Recalculer les moyennes ─────────────────────────────────────────
+      // 3. Recalculer les moyennes
       await Promise.all(
         rows.map(row =>
           calculService.calculerMatiere(row.utilisateurId, selectedMatiere).catch(() => null)
@@ -299,7 +299,7 @@ export const SaisirNotes: React.FC = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Notes & Absences</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Relever des notes</h1>
             <p className="text-gray-500 text-sm mt-0.5">
               Saisie en masse — toute la classe en une seule opération
             </p>
@@ -354,7 +354,7 @@ export const SaisirNotes: React.FC = () => {
             <option value="">Sélectionner une matière</option>
             {matieres.map(m => (
               <option key={m.id} value={m.id}>
-                {m.libelle} — Coef. {m.coefficient} — {m.credits} crédits
+                {m.libelle} / Coef. {m.coefficient} / crédits. {m.credits}
               </option>
             ))}
           </select>
@@ -416,9 +416,8 @@ export const SaisirNotes: React.FC = () => {
                           value={row.noteCC}
                           onChange={e => updateRow(i, 'noteCC', e.target.value)}
                           placeholder="—"
-                          className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            row.noteCC ? 'border-blue-300 bg-blue-50' : 'border-gray-300'
-                          }`}
+                          className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${row.noteCC ? 'border-blue-300 bg-blue-50' : 'border-gray-300'
+                            }`}
                         />
                       </td>
 
@@ -429,9 +428,8 @@ export const SaisirNotes: React.FC = () => {
                           value={row.noteExamen}
                           onChange={e => updateRow(i, 'noteExamen', e.target.value)}
                           placeholder="—"
-                          className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                            row.noteExamen ? 'border-blue-300 bg-blue-50' : 'border-gray-300'
-                          }`}
+                          className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${row.noteExamen ? 'border-blue-300 bg-blue-50' : 'border-gray-300'
+                            }`}
                         />
                       </td>
 
@@ -444,9 +442,8 @@ export const SaisirNotes: React.FC = () => {
                           placeholder="—"
                           disabled={!row.rattrapageAutorise && !row.noteRattrapage}
                           title={!row.rattrapageAutorise ? 'Rattrapage non autorisé (moyenne ≥ 6)' : ''}
-                          className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-40 disabled:cursor-not-allowed ${
-                            row.noteRattrapage ? 'border-amber-300 bg-amber-50' : 'border-gray-300'
-                          }`}
+                          className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-40 disabled:cursor-not-allowed ${row.noteRattrapage ? 'border-amber-300 bg-amber-50' : 'border-gray-300'
+                            }`}
                         />
                       </td>
 
@@ -457,18 +454,16 @@ export const SaisirNotes: React.FC = () => {
                           value={row.heuresAbsence}
                           onChange={e => updateRow(i, 'heuresAbsence', e.target.value)}
                           placeholder="0"
-                          className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                            row.heuresAbsence ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                          }`}
+                          className={`w-full px-2 py-1.5 border rounded-lg text-center text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent ${row.heuresAbsence ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                            }`}
                         />
                       </td>
 
                       {/* Moyenne prévisualisation */}
                       <td className="px-4 py-2.5 text-center">
                         {row.moyenneCalculee !== undefined ? (
-                          <span className={`font-bold text-sm ${
-                            row.moyenneCalculee >= 10 ? 'text-green-700' : 'text-red-600'
-                          }`}>
+                          <span className={`font-bold text-sm ${row.moyenneCalculee >= 10 ? 'text-green-700' : 'text-red-600'
+                            }`}>
                             {row.moyenneCalculee.toFixed(2)}
                           </span>
                         ) : (

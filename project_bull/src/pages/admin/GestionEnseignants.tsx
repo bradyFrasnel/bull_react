@@ -17,7 +17,7 @@ interface Teacher {
   utilisateur?: { email: string; nom: string };
 }
 
-interface CreateTeacherForm {
+interface TeacherForm {
   nom: string;
   prenom: string;
   email: string;
@@ -26,7 +26,7 @@ interface CreateTeacherForm {
   password: string;
 }
 
-const EMPTY_FORM: CreateTeacherForm = {
+const EMPTY_FORM: TeacherForm = {
   nom: '', prenom: '', email: '', matricule: '', specialite: '', password: '',
 };
 
@@ -38,10 +38,11 @@ export const GestionEnseignants: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null); // null = création
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [teacherMatieres, setTeacherMatieres] = useState<Matiere[]>([]);
-  const [formData, setFormData] = useState<CreateTeacherForm>(EMPTY_FORM);
+  const [formData, setFormData] = useState<TeacherForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [assigning, setAssigning] = useState(false);
 
@@ -63,8 +64,7 @@ export const GestionEnseignants: React.FC = () => {
     }
   };
 
-  const handleOpenModal = async () => {
-    setShowModal(true);
+  const loadMatieres = async () => {
     if (matieres.length === 0) {
       try {
         setLoadingMatieres(true);
@@ -75,15 +75,47 @@ export const GestionEnseignants: React.FC = () => {
     }
   };
 
+  // ── Ouvrir modal en mode création ──────────────────────────────────────────
+  const handleOpenCreate = async () => {
+    setEditingTeacher(null);
+    setFormData(EMPTY_FORM);
+    setError('');
+    setShowModal(true);
+    await loadMatieres();
+  };
+
+  //  Ouvrir modal en mode édition 
+  const handleOpenEdit = async (teacher: Teacher) => {
+    setEditingTeacher(teacher);
+    setFormData({
+      nom: teacher.utilisateur?.nom || '',
+      prenom: teacher.prenom,
+      email: teacher.utilisateur?.email || '',
+      matricule: teacher.matricule,
+      specialite: teacher.specialite || '',
+      password: '', // on ne re-saisit le mot de passe que si on veut le changer
+    });
+    setError('');
+    setShowModal(true);
+    await loadMatieres();
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingTeacher(null);
+    setFormData(EMPTY_FORM);
+    setError('');
+  };
+
+  // Création
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setSubmitting(true);
       setError('');
       await api.post('/auth/admin/create-enseignant', formData);
-      setFormData(EMPTY_FORM);
-      setShowModal(false);
       setSuccess('Enseignant créé avec succès');
+      handleCloseModal();
       await fetchTeachers();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erreur lors de la création');
@@ -92,10 +124,40 @@ export const GestionEnseignants: React.FC = () => {
     }
   };
 
+  // Mise à jour
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTeacher) return;
+    try {
+      setSubmitting(true);
+      setError('');
+
+      const payload: any = {
+        prenom: formData.prenom,
+        matricule: formData.matricule,
+        specialite: formData.specialite || undefined,
+        // Champs de l'utilisateur parent pris en charge par le backend
+        nom: formData.nom,
+        email: formData.email,
+      };
+      if (formData.password) payload.password = formData.password;
+
+      await api.put(`/enseignants/${editingTeacher.id}`, payload);
+      setSuccess('Enseignant mis à jour avec succès');
+      handleCloseModal();
+      await fetchTeachers();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erreur lors de la mise à jour');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Supprimer cet enseignant ?')) return;
+    if (!window.confirm('Supprimer cet enseignant ? Cette action est irréversible.')) return;
     try {
       await api.delete(`/enseignants/${id}`);
+      setSuccess('Enseignant supprimé');
       await fetchTeachers();
     } catch {
       setError('Erreur lors de la suppression');
@@ -107,12 +169,7 @@ export const GestionEnseignants: React.FC = () => {
     setShowAssignModal(true);
     setError('');
     setSuccess('');
-    if (matieres.length === 0) {
-      try {
-        const data = await matiereService.getAll();
-        setMatieres(data);
-      } catch { /* silencieux */ }
-    }
+    await loadMatieres();
     try {
       const assigned = await enseignantService.getMatieres(teacher.id);
       setTeacherMatieres(assigned);
@@ -150,18 +207,18 @@ export const GestionEnseignants: React.FC = () => {
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
 
-        {/* Header */}
+        {/* ── Header ─────────────────────────────────────────────────────────── */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gestion des Enseignants</h1>
             <p className="text-gray-600 mt-1">Gérez les enseignants et leurs matières</p>
           </div>
           <button
-            onClick={handleOpenModal}
+            onClick={handleOpenCreate}
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all active:scale-95"
           >
             <Plus className="w-5 h-5" />
-            Ajouter un enseignant
+            Inscription
           </button>
         </div>
 
@@ -178,7 +235,7 @@ export const GestionEnseignants: React.FC = () => {
           </div>
         )}
 
-        {/* Tableau */}
+        {/* ── Tableau ────────────────────────────────────────────────────────── */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           {loading ? (
             <div className="flex justify-center items-center h-64">
@@ -204,9 +261,7 @@ export const GestionEnseignants: React.FC = () => {
                 <tbody className="divide-y">
                   {teachers.map((teacher) => (
                     <tr key={teacher.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {teacher.utilisateur?.nom}
-                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.utilisateur?.nom}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{teacher.prenom}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{teacher.utilisateur?.email}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{teacher.matricule}</td>
@@ -220,7 +275,7 @@ export const GestionEnseignants: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end items-center gap-2">
-                          {/* Bouton Assigner matières */}
+                          {/* Assigner matières */}
                           <button
                             onClick={() => handleOpenAssign(teacher)}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
@@ -228,14 +283,17 @@ export const GestionEnseignants: React.FC = () => {
                             <BookMarked className="w-4 h-4" />
                             Matières
                           </button>
+                          {/* Modifier — maintenant actif */}
                           <button
-                            onClick={() => {}}
+                            onClick={() => handleOpenEdit(teacher)}
+                            title="Modifier"
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(teacher.id)}
+                            title="Supprimer"
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -251,13 +309,22 @@ export const GestionEnseignants: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Modal Créer Enseignant ── */}
+      {/* Modal Créer / Modifier Enseignant */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Ajouter un enseignant</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              {editingTeacher ? "Modifier l'enseignant" : 'Ajouter un enseignant'}
+            </h2>
 
-            <form onSubmit={handleCreate} className="space-y-4">
+            {error && (
+              <div className="mb-4 flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
+            )}
+
+            <form autoComplete="off" onSubmit={editingTeacher ? handleUpdate : handleCreate} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
@@ -309,22 +376,23 @@ export const GestionEnseignants: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe *</label>
-                <input type="password" required value={formData.password}
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mot de passe {editingTeacher ? '(laisser vide = inchangé)' : '*'}
+                </label>
+                <input type="password" autoComplete="new-password" required={!editingTeacher} value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button type="button"
-                  onClick={() => { setShowModal(false); setFormData(EMPTY_FORM); setError(''); }}
+                <button type="button" onClick={handleCloseModal}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                   Annuler
                 </button>
                 <button type="submit" disabled={submitting}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Créer
+                  {editingTeacher ? 'Enregistrer les modifications' : 'Créer'}
                 </button>
               </div>
             </form>
@@ -332,11 +400,10 @@ export const GestionEnseignants: React.FC = () => {
         </div>
       )}
 
-      {/* ── Modal Assigner Matières ── */}
+      {/* Modal Assigner Matières */}
       {showAssignModal && selectedTeacher && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
-
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Matières assignées</h2>
@@ -347,10 +414,8 @@ export const GestionEnseignants: React.FC = () => {
                   </span>
                 </p>
               </div>
-              <button
-                onClick={() => { setShowAssignModal(false); setError(''); setSuccess(''); }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
+              <button onClick={() => { setShowAssignModal(false); setError(''); setSuccess(''); }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -382,16 +447,13 @@ export const GestionEnseignants: React.FC = () => {
                       key={matiere.id}
                       onClick={() => handleToggleMatiere(matiere.id)}
                       disabled={assigning}
-                      className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all disabled:opacity-50 ${
-                        assigned
-                          ? 'border-green-400 bg-green-50 hover:bg-green-100'
-                          : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50'
-                      }`}
+                      className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all disabled:opacity-50 ${assigned
+                        ? 'border-green-400 bg-green-50 hover:bg-green-100'
+                        : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50'
+                        }`}
                     >
                       <div className="flex items-center gap-3 text-left">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          assigned ? 'bg-green-500' : 'bg-gray-200'
-                        }`}>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${assigned ? 'bg-green-500' : 'bg-gray-200'}`}>
                           <BookOpen className={`w-4 h-4 ${assigned ? 'text-white' : 'text-gray-500'}`} />
                         </div>
                         <div>
@@ -403,9 +465,8 @@ export const GestionEnseignants: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        assigned ? 'bg-green-200 text-green-800' : 'bg-gray-100 text-gray-600'
-                      }`}>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${assigned ? 'bg-green-200 text-green-800' : 'bg-gray-100 text-gray-600'
+                        }`}>
                         {assigned ? '✓ Assignée' : '+ Assigner'}
                       </span>
                     </button>

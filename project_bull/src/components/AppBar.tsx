@@ -141,14 +141,14 @@ export const AppBar: React.FC<AppBarProps> = ({ bgColor, textColor }) => {
 
         {/* Cloche */}
         <button
-          className="relative p-2 rounded-lg transition-colors"
+          className="relative p-2.5 rounded-lg transition-all duration-200 hover:scale-110"
           style={{ color: `${fg}bb` }}
           onMouseEnter={e => (e.currentTarget.style.background = `${fg}22`)}
           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
         >
-          <Bell style={{ width: '18px', height: '18px' }} />
+          <Bell style={{ width: '20px', height: '20px' }} />
           <span
-            className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2"
+            className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 animate-pulse"
             style={{ background: '#ef4444', borderColor: bg }}
           />
         </button>
@@ -160,29 +160,27 @@ export const AppBar: React.FC<AppBarProps> = ({ bgColor, textColor }) => {
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 hover:bg-white/10"
             style={{ color: fg }}
-            onMouseEnter={e => (e.currentTarget.style.background = `${fg}22`)}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             {/* Avatar */}
             <div
-              className={`w-8 h-8 rounded-full ${roleColor} flex items-center justify-center font-bold flex-shrink-0 ring-2 ring-white/20`}
-              style={{ fontSize: '12px', color: '#fff' }}
+              className={`w-9 h-9 rounded-full ${roleColor} flex items-center justify-center font-bold flex-shrink-0 ring-2 ring-white/30 shadow-lg`}
+              style={{ fontSize: '13px', color: '#fff' }}
             >
               {initials}
             </div>
             {/* Nom + rôle */}
             <div className="hidden md:block text-left">
-              <p style={{ fontSize: '13px', fontWeight: 600, color: fg, lineHeight: '1.2' }}>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: fg, lineHeight: '1.2' }}>
                 {user?.prenom} {user?.nom}
               </p>
-              <p style={{ fontSize: '11px', color: `${fg}99`, lineHeight: '1.2' }}>
+              <p style={{ fontSize: '12px', color: `${fg}99`, lineHeight: '1.2' }}>
                 {roleLabel}
               </p>
             </div>
             <ChevronRight
-              className={`w-3.5 h-3.5 transition-transform ${showUserMenu ? 'rotate-90' : ''}`}
+              className={`w-4 h-4 transition-transform duration-200 ${showUserMenu ? 'rotate-90' : ''}`}
               style={{ color: `${fg}88` }}
             />
           </button>
@@ -191,17 +189,17 @@ export const AppBar: React.FC<AppBarProps> = ({ bgColor, textColor }) => {
           {showUserMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-20 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                 {/* Header */}
-                <div className="px-4 py-3 border-b border-gray-100" style={{ background: bg }}>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>
+                <div className="px-4 py-3 border-b border-gray-100" style={{ background: `linear-gradient(135deg, ${bg} 0%, ${bg}dd 100%)` }}>
+                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
                     {user?.prenom} {user?.nom}
                   </p>
-                  <p style={{ fontSize: '11px', color: '#ffffff99' }} className="truncate mt-0.5">
+                  <p style={{ fontSize: '12px', color: '#ffffff99' }} className="truncate mt-0.5">
                     {user?.email}
                   </p>
                   <span
-                    className={`inline-block mt-1.5 px-2 py-0.5 rounded-full text-white font-medium ${roleColor}`}
+                    className={`inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-white font-medium ${roleColor}`}
                     style={{ fontSize: '11px' }}
                   >
                     {roleLabel}
@@ -212,7 +210,7 @@ export const AppBar: React.FC<AppBarProps> = ({ bgColor, textColor }) => {
                 <div className="py-1">
                   <button
                     onClick={() => { navigate(getProfilePath()); setShowUserMenu(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-all duration-200 hover:translate-x-1"
                     style={{ fontSize: '13px' }}
                   >
                     <User className="w-4 h-4 text-gray-400" />
@@ -220,7 +218,7 @@ export const AppBar: React.FC<AppBarProps> = ({ bgColor, textColor }) => {
                   </button>
                   <button
                     onClick={() => setShowUserMenu(false)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition-all duration-200 hover:translate-x-1"
                     style={{ fontSize: '13px' }}
                   >
                     <Settings className="w-4 h-4 text-gray-400" />
@@ -231,7 +229,7 @@ export const AppBar: React.FC<AppBarProps> = ({ bgColor, textColor }) => {
                 <div className="border-t border-gray-100 py-1">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-all duration-200 hover:translate-x-1"
                     style={{ fontSize: '13px' }}
                   >
                     <LogOut className="w-4 h-4" />

@@ -10,7 +10,36 @@ import {
   CreateMatiereForm,
   CreateEtudiantForm,
   CreateEnseignantForm,
+  Filiere,
+  CreateFiliereForm
 } from '../types';
+
+// ============ FILIERES ============
+export const filiereService = {
+  async getAll(): Promise<Filiere[]> {
+    const response = await api.get('/filieres');
+    return response.data;
+  },
+
+  async getById(id: string): Promise<Filiere> {
+    const response = await api.get(`/filieres/${id}`);
+    return response.data;
+  },
+
+  async create(data: CreateFiliereForm): Promise<Filiere> {
+    const response = await api.post('/filieres', data);
+    return response.data;
+  },
+
+  async update(id: string, data: Partial<CreateFiliereForm>): Promise<Filiere> {
+    const response = await api.put(`/filieres/${id}`, data);
+    return response.data;
+  },
+
+  async delete(id: string): Promise<void> {
+    await api.delete(`/filieres/${id}`);
+  }
+};
 
 // ============ SEMESTRES ============
 export const semestreService = {
