@@ -1,15 +1,25 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { filiereService } from '../../services';
 import { Plus, Trash2, Edit2, AlertCircle, Loader2, CheckCircle, BookOpen } from 'lucide-react';
 import { Filiere, CreateFiliereForm } from '../../types';
 
 const EMPTY_FORM: CreateFiliereForm = { nom: '', code: '' };
 
-export const FilieresContent: React.FC = () => {
+export const FilieresContent: React.FC<{ onSelectFiliere?: (filiereId: string) => void }> = ({ onSelectFiliere }) => {
+  const navigate = useNavigate();
   const [filieres, setFilieres] = useState<Filiere[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const handleSelectFiliere = (id: string) => {
+    if (onSelectFiliere) {
+      onSelectFiliere(id);
+    } else {
+      navigate(`/admin/academique?tab=classes&filiereId=${id}`);
+    }
+  };
 
   // Modals state
   const [showCreate, setShowCreate] = useState(false);
@@ -155,19 +165,37 @@ export const FilieresContent: React.FC = () => {
               <tbody className="divide-y divide-gray-200">
                 {filieres.map((filiere: any) => (
                   <tr key={filiere.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{filiere.nom}</td>
+                    <td className="px-6 py-4 text-sm font-medium">
+                      <button
+                        onClick={() => handleSelectFiliere(filiere.id)}
+                        className="text-left font-semibold text-gray-900 hover:text-indigo-600 transition-colors"
+                      >
+                        {filiere.nom}
+                      </button>
+                    </td>
                     <td className="px-6 py-4">
                       <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-mono font-medium">
                         {filiere.code}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+                      <button
+                        onClick={() => handleSelectFiliere(filiere.id)}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-full transition-colors cursor-pointer"
+                      >
                         {filiere._count?.classes ?? 0} classes
-                      </span>
+                      </button>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end items-center gap-2">
+                        <button
+                          onClick={() => handleSelectFiliere(filiere.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
+                          title="Voir les classes de cette filière"
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          Voir classes
+                        </button>
                         <button
                           onClick={() => handleOpenEdit(filiere)}
                           className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"

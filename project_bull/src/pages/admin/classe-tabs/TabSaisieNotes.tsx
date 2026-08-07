@@ -151,7 +151,8 @@ export const TabSaisieNotes: React.FC<TabSaisieNotesProps> = ({ classeId, classe
     // Preparer les donnees pour Excel
     const excelData = rows.map(r => ({
       Matricule: r.matricule,
-      'Nom & Prénom': `${r.nom} ${r.prenom}`,
+      Nom: r.nom,
+      Prénom: r.prenom,
       'Note CC (/20)': r.noteCC || '',
       'Note Examen (/20)': r.noteExamen || '',
       'Rattrapage (/20)': r.noteRattrapage || ''
@@ -162,7 +163,8 @@ export const TabSaisieNotes: React.FC<TabSaisieNotesProps> = ({ classeId, classe
     // Auto-ajuster la largeur des colonnes
     const colWidths = [
       { wch: 15 }, // Matricule
-      { wch: 30 }, // Nom & Prenom
+      { wch: 20 }, // Nom
+      { wch: 20 }, // Prénom
       { wch: 15 }, // Note CC
       { wch: 15 }, // Note Examen
       { wch: 15 }  // Rattrapage

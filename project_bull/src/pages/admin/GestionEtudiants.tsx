@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
 import { api } from '../../services/api';
-import { Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2, CheckCircle, Download, Upload } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface Student {
   id: string;
@@ -52,6 +53,7 @@ export const GestionEtudiants: React.FC = () => {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [formData, setFormData] = useState<StudentForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [classes, setClasses] = useState<{ id: string, nom: string }[]>([]);
 
   useEffect(() => {
@@ -82,6 +84,163 @@ export const GestionEtudiants: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ── Exporter un fichier Excel pré-rempli ou la liste des étudiants ─────────────
+  const handleExportExcel = () => {
+    let exportData: any[] = [];
+
+    if (students.length > 0) {
+      exportData = students.map((s) => ({
+        Matricule: s.matricule || '',
+        Nom: s.utilisateur?.nom || '',
+        Prénom: s.prenom || '',
+        Email: s.utilisateur?.email || '',
+        'Mot de passe': 'pass1234',
+        'Date Naissance (AAAA-MM-JJ)': s.date_naissance ? s.date_naissance.split('T')[0] : '',
+        'Lieu Naissance': s.lieu_naissance || '',
+        'Type BAC': s.bac_type || '',
+        'Année BAC': s.annee_bac || new Date().getFullYear(),
+        Provenance: s.provenance || '',
+        Statut: s.statut || 'INSCRIT',
+        'Code Classe': s.classe?.code || '',
+      }));
+    } else {
+      // Modèle pré-rempli d'exemple pour inscription en masse
+      exportData = [
+        {
+          Matricule: '2024ASUR001',
+          Nom: 'MBA NSOME',
+          Prénom: 'Yannick Lionel',
+          Email: 'yannick.mba@asur.ga',
+          'Mot de passe': 'pass1234',
+          'Date Naissance (AAAA-MM-JJ)': '2001-05-15',
+          'Lieu Naissance': 'Libreville',
+          'Type BAC': 'C',
+          'Année BAC': '2022',
+          Provenance: 'Lycée Léon MBA',
+          Statut: 'INSCRIT',
+          'Code Classe': 'ASUR-2025',
+        },
+        {
+          Matricule: '2024ASUR002',
+          Nom: 'YESSA FAYE',
+          Prénom: 'David Almond',
+          Email: 'david.yessa@asur.ga',
+          'Mot de passe': 'pass1234',
+          'Date Naissance (AAAA-MM-JJ)': '2000-09-13',
+          'Lieu Naissance': 'Port-Gentil',
+          'Type BAC': 'D',
+          'Année BAC': '2021',
+          Provenance: 'Lycée National',
+          Statut: 'INSCRIT',
+          'Code Classe': 'ASUR-2025',
+        },
+      ];
+    }
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    ws['!cols'] = [
+      { wch: 15 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 28 },
+      { wch: 15 },
+      { wch: 26 },
+      { wch: 18 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 25 },
+      { wch: 14 },
+      { wch: 15 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Etudiants');
+    XLSX.writeFile(wb, 'inscription_etudiants_pre_rempli.xlsx');
+  };
+
+  // ── Importer un fichier Excel pour inscription en masse ─────────────────────
+  const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setError('');
+    setSuccess('');
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data: any[] = XLSX.utils.sheet_to_json(ws);
+
+        if (data.length === 0) {
+          throw new Error('Le fichier Excel est vide.');
+        }
+
+        let createdCount = 0;
+        let errorsCount = 0;
+
+        for (const row of data) {
+          if (!row.Matricule || !row.Nom || !row.Prénom || !row.Email) continue;
+
+          // Trouver l'ID de la classe si un Code Classe est renseigné
+          let matchedClasseId: string | null = null;
+          if (row['Code Classe']) {
+            const foundClasse = classes.find(
+              (c: any) => c.code === String(row['Code Classe']).trim() || c.nom === String(row['Code Classe']).trim()
+            );
+            if (foundClasse) matchedClasseId = foundClasse.id;
+          }
+
+          try {
+            await api.post('/auth/admin/create-etudiant', {
+              matricule: String(row.Matricule).trim(),
+              nom: String(row.Nom).trim(),
+              prenom: String(row.Prénom).trim(),
+              email: String(row.Email).trim(),
+              password: String(row['Mot de passe'] || 'pass1234').trim(),
+              date_naissance: row['Date Naissance (AAAA-MM-JJ)']
+                ? new Date(row['Date Naissance (AAAA-MM-JJ)']).toISOString()
+                : new Date().toISOString(),
+              lieu_naissance: String(row['Lieu Naissance'] || '-'),
+              bac_type: String(row['Type BAC'] || 'C'),
+              annee_bac: parseInt(String(row['Année BAC'] || '2023')),
+              provenance: String(row.Provenance || '-'),
+              statut: String(row.Statut || 'INSCRIT'),
+              classeId: matchedClasseId,
+            });
+            createdCount++;
+          } catch (err) {
+            console.error('Erreur inscription étudiant:', row, err);
+            errorsCount++;
+          }
+        }
+
+        if (createdCount > 0) {
+          setSuccess(
+            `${createdCount} étudiant(s) inscrit(s) en masse avec succès ! ${
+              errorsCount > 0 ? `(${errorsCount} erreur(s))` : ''
+            }`
+          );
+          await fetchStudents();
+        } else {
+          setError(
+            `Aucun étudiant n'a pu être inscrit. Vérifiez le format du fichier (erreurs: ${errorsCount}).`
+          );
+        }
+      } catch (err: any) {
+        setError(err.message || 'Erreur lors de la lecture du fichier Excel.');
+      } finally {
+        setImporting(false);
+        e.target.value = '';
+      }
+    };
+    reader.readAsBinaryString(file);
   };
 
   // ── Ouvrir le modal en mode création ──────────────────────────────────────────
@@ -190,18 +349,43 @@ export const GestionEtudiants: React.FC = () => {
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gestion des Étudiants</h1>
-            <p className="text-gray-600 mt-1">Gérez les étudiants du système</p>
+            <p className="text-gray-600 mt-1">Inscription individuelle ou en masse via fichier Excel pré-rempli</p>
           </div>
-          <button
-            onClick={handleOpenCreate}
-            className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all active:scale-95"
-          >
-            <Plus className="w-5 h-5" />
-            Inscription
-          </button>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors shadow-sm"
+              title="Exporter ou télécharger le fichier modèle pré-rempli"
+            >
+              <Download className="w-4 h-4 text-emerald-600" />
+              {students.length > 0 ? 'Exporter la liste' : 'Modèle pré-rempli'}
+            </button>
+            <label className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium transition-colors cursor-pointer shadow-sm">
+              {importing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
+              Importer Excel
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                className="hidden"
+                onChange={handleImportExcel}
+                disabled={importing}
+              />
+            </label>
+            <button
+              onClick={handleOpenCreate}
+              className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all active:scale-95 text-sm font-medium shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              Inscription
+            </button>
+          </div>
         </div>
 
         {error && (

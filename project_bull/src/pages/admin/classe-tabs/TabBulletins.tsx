@@ -3,6 +3,7 @@ import { calculService, bulletinService } from '../../../services';
 import { statistiquesService } from '../../../services/results.service';
 import { AlertCircle, Loader2, CheckCircle, RefreshCw, BarChart3, Users, FileText, Download } from 'lucide-react';
 import { BulletinDocument, BulletinData } from '../../../components/BulletinDocument';
+import { createPortal } from 'react-dom';
 
 interface TabBulletinsProps {
   classeId: string;
@@ -19,7 +20,8 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
   // States pour afficher des données
   const [statsData, setStatsData] = useState<any>(null);
   const [recapRows, setRecapRows] = useState<any[]>([]);
-  const [bulletinToPrint, setBulletinToPrint] = useState<any>(null);
+  const [bulletinsToPrint, setBulletinsToPrint] = useState<any[]>([]);
+  const [printing, setPrinting] = useState(false);
 
   const semestres = classe?.semestres?.map((s: any) => s.semestre) || [];
   const etudiants = classe?.etudiants || [];
@@ -85,13 +87,39 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
   const printBulletinSemestre = async (etudiantId: string) => {
     if (!selectedSemestreId) { setError("Sélectionnez un semestre"); return; }
     try {
-      const etu = etudiants.find((e: any) => e.utilisateurId === etudiantId);
+      setPrinting(true);
       const raw = await bulletinService.getBulletinSemestre(etudiantId, selectedSemestreId);
-      // Adaptation minimaliste (dans un cas réel, utiliser buildSemestreData complet)
-      setBulletinToPrint(raw); // Vous devriez utiliser votre composant <BulletinDocument />
-      alert("La fonctionnalité d'impression s'ouvrira avec les données récupérées. (A intégrer avec PDF)");
+      setBulletinsToPrint([raw]);
+      setTimeout(() => {
+        window.print();
+        setPrinting(false);
+      }, 500);
     } catch (e) {
       setError("Impossible de générer le bulletin pour cet étudiant.");
+      setPrinting(false);
+    }
+  };
+
+  const printClasseBulletins = async () => {
+    if (!selectedSemestreId) { setError("Sélectionnez un semestre"); return; }
+    if (recapRows.length === 0) { setError("Générez d'abord le récapitulatif pour avoir la liste des étudiants."); return; }
+    
+    try {
+      setPrinting(true);
+      const bulls = await Promise.all(
+        recapRows.map(row => bulletinService.getBulletinSemestre(row.etudiantId || row.id || row.matricule, selectedSemestreId).catch(() => null))
+      );
+      const validBulls = bulls.filter(b => b !== null);
+      if (validBulls.length === 0) throw new Error("Aucun bulletin valide");
+      
+      setBulletinsToPrint(validBulls);
+      setTimeout(() => {
+        window.print();
+        setPrinting(false);
+      }, 1000); // laisser le temps au DOM de render toutes les images
+    } catch (e) {
+      setError("Erreur lors de la génération des bulletins de la classe.");
+      setPrinting(false);
     }
   };
 
@@ -194,8 +222,16 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
       {/* Affichage du Récapitulatif avec Actions Bulletins */}
       {!loading && recapRows.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
+          <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <h3 className="font-semibold text-gray-800">Récapitulatif de la classe</h3>
+            <button
+              onClick={printClasseBulletins}
+              disabled={printing}
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {printing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Imprimer la classe
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -231,6 +267,18 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
             </table>
           </div>
         </div>
+      )}
+
+      {/* Rendu pour impression (Portaled to document.body) */}
+      {bulletinsToPrint.length > 0 && createPortal(
+        <div id="print-root" className="bg-white">
+          {bulletinsToPrint.map((data, index) => (
+            <div key={index} className="print-page" style={{ pageBreakAfter: index < bulletinsToPrint.length - 1 ? 'always' : 'auto' }}>
+              <BulletinDocument data={data} />
+            </div>
+          ))}
+        </div>,
+        document.body
       )}
 
     </div>

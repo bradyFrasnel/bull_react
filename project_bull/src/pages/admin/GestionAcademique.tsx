@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AdminLayout } from "../../components/AdminLayout";
 import { api } from "../../services/api";
 import { etudiantService, semestreService, calculService, resultatSemestreService, resultatAnnuelService } from "../../services";
@@ -16,7 +17,18 @@ type Tab = "semestres" | "ue" | "matieres" | "filieres" | "classes" | "calculs";
 type ModalMode = "create" | "edit";
 
 export const GestionAcademique: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("semestres");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const tabParam = searchParams.get("tab") as Tab;
+  const filiereParam = searchParams.get("filiereId");
+
+  const [activeTab, setActiveTab] = useState<Tab>(tabParam || "semestres");
+  const [selectedFiliereId, setSelectedFiliereId] = useState<string | null>(filiereParam);
+
+  useEffect(() => {
+    if (tabParam) setActiveTab(tabParam);
+    if (filiereParam !== null && filiereParam !== undefined) setSelectedFiliereId(filiereParam);
+  }, [tabParam, filiereParam]);
 
   // Données
   const [semesters, setSemesters] = useState<SemesterI[]>([]);
@@ -375,13 +387,19 @@ export const GestionAcademique: React.FC = () => {
         {/* Filières & Classes - Utilisation des composants extraits */}
         {activeTab === "filieres" && (
           <div className="bg-white rounded-xl shadow-md p-6">
-            <FilieresContent />
+            <FilieresContent onSelectFiliere={(filiereId) => {
+              setSelectedFiliereId(filiereId);
+              setActiveTab("classes");
+            }} />
           </div>
         )}
 
         {activeTab === "classes" && (
           <div className="bg-white rounded-xl shadow-md p-6">
-            <ClassesContent />
+            <ClassesContent 
+              filiereId={selectedFiliereId} 
+              onClearFilter={() => setSelectedFiliereId(null)} 
+            />
           </div>
         )}
 

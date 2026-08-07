@@ -39,7 +39,7 @@ interface ClasseForm {
 
 const EMPTY_FORM: ClasseForm = { nom: '', code: '', anneeUniversitaire: '', capaciteMax: '', filiereId: '' };
 
-export const ClassesContent: React.FC = () => {
+export const ClassesContent: React.FC<{ filiereId?: string | null, onClearFilter?: () => void }> = ({ filiereId, onClearFilter }) => {
   const navigate = useNavigate();
   const [classes, setClasses] = useState<Classe[]>([]);
   const [semestres, setSemestres] = useState<Semestre[]>([]);
@@ -226,7 +226,14 @@ export const ClassesContent: React.FC = () => {
       {/* Header*/}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion des Classes</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-900">Gestion des Classes</h1>
+            {filiereId && onClearFilter && (
+              <button onClick={onClearFilter} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium hover:bg-gray-200 flex items-center gap-1">
+                Filtre actif <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
           <p className="text-gray-600 mt-1">Gérez les promotions et leurs semestres</p>
         </div>
         <button
@@ -278,9 +285,17 @@ export const ClassesContent: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {classes.map((classe) => (
+                {classes.filter(c => !filiereId || (c as any).filiere?.id === filiereId || (c as any).filiereId === filiereId).map((classe) => (
                   <tr key={classe.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{classe.nom}</td>
+                    <td className="px-6 py-4 text-sm font-medium">
+                      <button
+                        onClick={() => navigate(`/admin/classes/${classe.id}`)}
+                        className="text-left font-bold text-gray-900 hover:text-indigo-600 transition-colors"
+                        title="Ouvrir la gestion de la classe (Étudiants, Notes, Bulletins)"
+                      >
+                        {classe.nom}
+                      </button>
+                    </td>
                     <td className="px-6 py-4">
                       <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-mono font-medium">
                         {classe.code}
@@ -291,13 +306,17 @@ export const ClassesContent: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{classe.anneeUniversitaire}</td>
                     <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-700">
-                        <Users className="w-4 h-4 text-gray-400" />
+                      <button
+                        onClick={() => navigate(`/admin/classes/${classe.id}`)}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-full transition-colors cursor-pointer"
+                        title="Voir la liste des étudiants et réaliser les actions"
+                      >
+                        <Users className="w-4 h-4 text-indigo-500" />
                         {classe._count?.etudiants ?? 0}
                         {classe.capaciteMax && (
                           <span className="text-gray-400 text-xs">/ {classe.capaciteMax}</span>
                         )}
-                      </span>
+                      </button>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-700">

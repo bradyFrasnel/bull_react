@@ -54,11 +54,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       path: `${basePath}/etudiants`,
     },
     {
-      label: 'Gestion des Classes',
-      icon: Layers,
-      path: `${basePath}/classes`,
-    },
-    {
       label: 'Gestion des Filières',
       icon: BookOpen,
       path: `${basePath}/filieres`,

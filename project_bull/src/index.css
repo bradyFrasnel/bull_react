@@ -31,3 +31,30 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ── Styles d'impression ── */
+@media print {
+  @page {
+    margin: 0;
+    size: A4 portrait;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #print-root, #print-root * {
+    visibility: visible;
+  }
+  #print-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+  /* Cacher les éléments superflus */
+  .no-print {
+    display: none !important;
+  }
+}
