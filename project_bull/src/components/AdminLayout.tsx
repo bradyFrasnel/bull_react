@@ -15,6 +15,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { AppBar } from './AppBar';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -160,10 +161,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         {/* User Section */}
         <div className="border-t border-gray-700 p-4 space-y-3">
           {sidebarOpen && (
-            <div className="px-3 py-3 bg-gray-700/50 rounded-lg border border-gray-600">
-              <p className="text-sm font-semibold text-white truncate">{user?.prenom || user?.nom}</p>
-              <p className="text-xs text-gray-400 truncate mt-0.5">{user?.email}</p>
-            </div>
+            <>
+              <div className="px-3 py-3 bg-gray-700/50 rounded-lg border border-gray-600">
+                <p className="text-sm font-semibold text-white truncate">{user?.prenom || user?.nom}</p>
+                <p className="text-xs text-gray-400 truncate mt-0.5">{user?.email}</p>
+              </div>
+              <LanguageSwitcher />
+            </>
           )}
           <button
             onClick={handleLogout}

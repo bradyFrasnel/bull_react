@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Layers } from 'lucide-react';
+import { BookOpen, Layers, AlertCircle } from 'lucide-react';
 
 interface TabAcademiqueProps {
   classeId: string;
@@ -28,6 +28,13 @@ export const TabAcademique: React.FC<TabAcademiqueProps> = ({ classe }) => {
 
       {semestresAssocies.map((sa: any) => {
         const semestre = sa.semestre;
+        const totalSemestreCredits = semestre.ues?.reduce((sumUe: number, ue: any) => {
+          const ueCredits = ue.matieres && ue.matieres.length > 0
+            ? ue.matieres.reduce((sumMat: number, m: any) => sumMat + (m.credits || 0), 0)
+            : (ue.credits || 0);
+          return sumUe + ueCredits;
+        }, 0) || 0;
+
         return (
           <div key={semestre.id} className="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
             <div className="bg-gray-100 border-b border-gray-200 px-6 py-4 flex items-center justify-between">
@@ -36,9 +43,19 @@ export const TabAcademique: React.FC<TabAcademiqueProps> = ({ classe }) => {
                   {semestre.code}
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">{semestre.libelle}</h3>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${totalSemestreCredits === 30 ? 'bg-green-100 text-green-800' : totalSemestreCredits > 30 ? 'bg-amber-100 text-amber-800 font-bold' : 'bg-amber-100 text-amber-800'}`}>
+                  {totalSemestreCredits} / 30 Crédits
+                </span>
               </div>
               <span className="text-sm font-medium text-gray-500">{semestre.anneeUniversitaire}</span>
             </div>
+
+            {totalSemestreCredits > 30 && (
+              <div className="bg-amber-50 border-b border-amber-200 p-3 px-6 flex items-center gap-2 text-amber-800 text-sm font-bold">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600" />
+                <span>AVERTISSEMENT : Crédit du semestre &gt; 30 ({totalSemestreCredits} / 30 crédits). L'ajout ou l'attribution de nouvelles matières est bloqué tant que le total dépasse 30.</span>
+              </div>
+            )}
 
             <div className="p-6 space-y-6">
               {semestre.ues && semestre.ues.length > 0 ? (
@@ -50,7 +67,9 @@ export const TabAcademique: React.FC<TabAcademiqueProps> = ({ classe }) => {
                         {ue.code} - {ue.libelle}
                       </h4>
                       <span className="ml-auto text-sm font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full">
-                        Crédits: {ue.credits}
+                        Crédits: {ue.matieres && ue.matieres.length > 0
+                          ? ue.matieres.reduce((sum: number, m: any) => sum + (m.credits || 0), 0)
+                          : (ue.credits || 0)}
                       </span>
                     </div>
 

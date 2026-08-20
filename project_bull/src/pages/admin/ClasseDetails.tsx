@@ -106,7 +106,7 @@ export const ClasseDetails: React.FC = () => {
 
           {/* Contenu de l'onglet actif */}
           <div className="p-6">
-            {activeTab === 'etudiants' && <TabEtudiants classeId={id!} />}
+            {activeTab === 'etudiants' && <TabEtudiants classeId={id!} classe={classe} />}
             {activeTab === 'programme' && <TabAcademique classeId={id!} classe={classe} />}
             {activeTab === 'notes' && <TabSaisieNotes classeId={id!} classe={classe} />}
             {activeTab === 'absences' && <TabAbsences classeId={id!} classe={classe} />}

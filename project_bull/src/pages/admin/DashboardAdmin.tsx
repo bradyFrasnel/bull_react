@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '../../components/AdminLayout';
 import {
@@ -10,13 +10,10 @@ import {
   Loader2,
   Edit,
   Calculator,
+  Shield,
 } from 'lucide-react';
 import {
-  etudiantService,
-  enseignantService,
-  matiereService,
-  semestreService,
-  evaluationService,
+  dashboardService,
 } from '../../services';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -24,8 +21,7 @@ interface DashboardStats {
   totalEtudiants: number;
   totalEnseignants: number;
   totalMatieres: number;
-  totalSemestres: number;
-  totalEvaluations: number;
+  totalClasses: number;
 }
 
 export const DashboardAdmin: React.FC = () => {
@@ -35,8 +31,7 @@ export const DashboardAdmin: React.FC = () => {
     totalEtudiants: 0,
     totalEnseignants: 0,
     totalMatieres: 0,
-    totalSemestres: 0,
-    totalEvaluations: 0,
+    totalClasses: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -51,33 +46,15 @@ export const DashboardAdmin: React.FC = () => {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const [etudiants, enseignants, matieres, semestres, evaluations] =
-        await Promise.allSettled([
-          etudiantService.getAll(),
-          enseignantService.getAll(),
-          matiereService.getAll(),
-          semestreService.getAll(),
-          evaluationService.getAll(),
-        ]);
-
-      setStats({
-        totalEtudiants:
-          etudiants.status === 'fulfilled' ? etudiants.value.length : 0,
-        totalEnseignants:
-          enseignants.status === 'fulfilled' ? enseignants.value.length : 0,
-        totalMatieres:
-          matieres.status === 'fulfilled' ? matieres.value.length : 0,
-        totalSemestres:
-          semestres.status === 'fulfilled' ? semestres.value.length : 0,
-        totalEvaluations:
-          evaluations.status === 'fulfilled' ? evaluations.value.length : 0,
-      });
-    } catch (err: any) {
+      const data = await dashboardService.getStats();
+      setStats(data);
+    } catch (err) {
       setError('Erreur lors du chargement des statistiques');
     } finally {
       setLoading(false);
     }
   };
+
 
   const statCards = [
     {
@@ -108,13 +85,13 @@ export const DashboardAdmin: React.FC = () => {
       action: () => navigate(`${basePath}/academique`),
     },
     {
-      label: 'évaluations',
-      value: stats.totalEvaluations,
+      label: 'Classes',
+      value: stats.totalClasses,
       icon: FileText,
       color: 'purple',
       bg: 'bg-purple-50',
       text: 'text-purple-600',
-      action: () => navigate(`${basePath}/saisir-notes`),
+      action: () => navigate(`${basePath}/classes`),
     },
   ];
 
@@ -150,6 +127,17 @@ export const DashboardAdmin: React.FC = () => {
       text: 'text-indigo-600',
       border: 'hover:border-indigo-400',
       action: () => navigate(`${basePath}/bulletins`),
+      badge: null,
+    },
+    {
+      label: 'Journal d\'Audit',
+      description: 'Historique des actions critiques',
+      icon: Shield,
+      color: 'red',
+      bg: 'bg-red-100',
+      text: 'text-red-600',
+      border: 'hover:border-red-400',
+      action: () => navigate(`${basePath}/audit-logs`),
       badge: null,
     },
   ];
@@ -208,7 +196,7 @@ export const DashboardAdmin: React.FC = () => {
         {/* Actions rapides */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Actions Rapides</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {quickActions.map((action) => {
               const Icon = action.icon;
               return (
@@ -278,22 +266,7 @@ export const DashboardAdmin: React.FC = () => {
               Référentiel Académique
             </h2>
             <div className="space-y-3">
-              <button
-                onClick={() => navigate(`${basePath}/academique`)}
-                className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-amber-50 transition-colors group border border-gray-100 hover:border-amber-200"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
-                    <FileText className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <span className="text-gray-700 group-hover:text-amber-700 font-medium">
-                    Semestres
-                  </span>
-                </div>
-                <span className="text-2xl font-bold text-amber-600">
-                  {loading ? '0' : stats.totalSemestres.toLocaleString()}
-                </span>
-              </button>
+
               <button
                 onClick={() => navigate(`${basePath}/academique`)}
                 className="w-full flex items-center justify-between p-4 rounded-lg hover:bg-purple-50 transition-colors group border border-gray-100 hover:border-purple-200"

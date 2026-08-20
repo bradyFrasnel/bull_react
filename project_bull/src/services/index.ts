@@ -6,3 +6,4 @@ export * from './academic.service';
 export * from './evaluation.service';
 export * from './results.service';
 export * from './bulletin.service';
+export * from './dashboard.service';

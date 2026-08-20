@@ -162,7 +162,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loading,                                 // true pendant la vérification initiale
         login,                                   // Fonction de connexion
         logout,                                  // Fonction de déconnexion
-        isAuthenticated: authService.isAuthenticated(), // Raccourci booléen
+        isAuthenticated: !!user, // Raccourci booléen
       }}
     >
       {children}

@@ -29,15 +29,16 @@ import { Dashboard } from './pages/Dashboard';            // Dashboard génériq
 
 // PAGES ADMINISTRATEUR
 import { DashboardAdmin } from './pages/admin/DashboardAdmin';           // Tableau de bord admin
-import { GestionEnseignants } from './pages/admin/GestionEnseignants';   // CRUD enseignants
-import { GestionEtudiants } from './pages/admin/GestionEtudiants';       // CRUD étudiants
+import { GestionEnseignants } from './pages/admin/gestion-enseignants';   // CRUD enseignants
+import { GestionEtudiants } from './pages/admin/gestion-etudiants';       // CRUD étudiants
 import { GestionAcademique } from './pages/admin/GestionAcademique';     // Gestion semestres/UE/matières
 import { ProfilePage } from './pages/admin/ProfilePage';                 // Profil admin
-import { GestionBulletins } from './pages/admin/GestionBulletins';       // Génération des bulletins
+import { GestionBulletins } from './pages/admin/gestion-bulletins';       // Génération des bulletins
 import { ModellesBulletins } from './pages/admin/ModellesBulletins';     // Modèles de bulletins
 import { GestionClasses } from './pages/admin/GestionClasses';           // CRUD classes/promotions
 import { ClasseDetails } from './pages/admin/ClasseDetails';             // Page de détails d'une classe
 import { GestionFilieres } from './pages/admin/GestionFilieres';         // CRUD filières
+import { AuditLogPage } from './pages/admin/AuditLogPage';               // Journal d'audit
 
 // PAGES SECRÉTARIAT
 // Les pages secrétariat sont des miroirs des pages admin avec les mêmes fonctionnalités
@@ -60,6 +61,8 @@ import { ConsulterNotes } from './pages/etudiant/ConsulterNotes';        // Cons
 import { Bulletins } from './pages/etudiant/Bulletins';                  // Consulter ses bulletins
 import { ProfileEtudiant } from './pages/etudiant/ProfileEtudiant';     // Profil étudiant
 
+import { ErrorBoundary } from './components/ErrorBoundary';
+
 /**
  * Composant App — Point d'entrée de l'application React.
  *
@@ -74,10 +77,12 @@ import { ProfileEtudiant } from './pages/etudiant/ProfileEtudiant';     // Profi
  */
 function App() {
   return (
-    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <AuthProvider>
-        <Routes>
-          {/* ROUTES PUBLIQUES — Accessibles sans authentification */}
+    <ErrorBoundary>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AuthProvider>
+          <Routes>
+            {/* ROUTES PUBLIQUES — Accessibles sans authentification */}
+
 
           {/* Page d'accueil — choix du rôle de connexion */}
           <Route path="/" element={<Home />} />
@@ -175,6 +180,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="admin">
                 <ClasseDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/audit-logs"
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AuditLogPage />
               </ProtectedRoute>
             }
           />
@@ -338,6 +351,7 @@ function App() {
         </Routes>
       </AuthProvider>
     </Router>
+    </ErrorBoundary>
   );
 }
 

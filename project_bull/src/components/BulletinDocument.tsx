@@ -15,6 +15,8 @@ export interface MatiereData {
   rattrapage?: number;
   moyenne?: number;
   moyenneClasse?: number;
+  rang?: number;
+  appreciation?: string;
   absences?: number;
 }
 
@@ -24,6 +26,8 @@ export interface UEData {
   matieres: MatiereData[];
   moyenne?: number;
   moyenneClasse?: number;
+  rang?: number;
+  appreciation?: string;
   creditsTotal: number;
   creditsAcquis: number;
   acquise: boolean;
@@ -57,6 +61,8 @@ export interface BulletinSemestreData {
   ues: UEData[];
   moyenneSemestre?: number;
   moyenneClasseSemestre?: number;
+  rangSemestre?: number;
+  appreciation?: string;
   creditsTotal: number;
   creditsAcquis: number;
   valide?: boolean;
@@ -265,8 +271,8 @@ const BulletinSemestrielDoc: React.FC<{ d: BulletinSemestreData }> = ({ d }) => 
                     <td style={{ border: "1px solid #000", padding: "2px 6px 2px 14px" }}>{m.libelle}</td>
                     <td style={{ border: "1px solid #000", textAlign: "center" }}>{m.credits}</td>
                     <td style={{ border: "1px solid #000", textAlign: "center" }}>{fmt(m.coefficient)}</td>
-                    <td style={{ border: "1px solid #000", textAlign: "center" }}>{fmt(m.moyenne ?? m.examen ?? m.cc)}</td>
-                    <td style={{ border: "1px solid #000", textAlign: "center" }}>{fmt(m.moyenneClasse)}</td>
+                    <td style={{ border: "1px solid #000", textAlign: "center", ...getMoyenneColorStyle(m.moyenne ?? m.examen ?? m.cc) }}>{fmt(m.moyenne ?? m.examen ?? m.cc)}</td>
+                    <td style={{ border: "1px solid #000", textAlign: "center", ...getMoyenneColorStyle(m.moyenneClasse) }}>{fmt(m.moyenneClasse)}</td>
                   </tr>
                 ))}
                 {/* Ligne récapitulative Moyenne UE */}
@@ -280,7 +286,7 @@ const BulletinSemestrielDoc: React.FC<{ d: BulletinSemestreData }> = ({ d }) => 
                   <td style={{ border: "1px solid #000", textAlign: "center", fontSize: "9.5px", ...getMoyenneColorStyle(ue.moyenne) }}>
                     {fmt(ue.moyenne)}
                   </td>
-                  <td style={{ border: "1px solid #000", textAlign: "center", fontWeight: "bold" }}>{fmt(ue.moyenneClasse)}</td>
+                  <td style={{ border: "1px solid #000", textAlign: "center", fontWeight: "bold", ...getMoyenneColorStyle(ue.moyenneClasse) }}>{fmt(ue.moyenneClasse)}</td>
                 </tr>
               </React.Fragment>
             );
@@ -305,7 +311,7 @@ const BulletinSemestrielDoc: React.FC<{ d: BulletinSemestreData }> = ({ d }) => 
             <td style={{ border: "2px solid #000", textAlign: "center", fontSize: "11px", ...getMoyenneColorStyle(d.moyenneSemestre) }}>
               {fmt(d.moyenneSemestre)}
             </td>
-            <td style={{ border: "1px solid #000", textAlign: "center", fontWeight: "bold", fontSize: "9.5px" }}>
+            <td style={{ border: "1px solid #000", textAlign: "center", fontWeight: "bold", fontSize: "9.5px", ...getMoyenneColorStyle(d.moyenneClasseSemestre || d.statistiques?.moyenneClasse) }}>
               {fmt(d.moyenneClasseSemestre || d.statistiques?.moyenneClasse)}
             </td>
           </tr>

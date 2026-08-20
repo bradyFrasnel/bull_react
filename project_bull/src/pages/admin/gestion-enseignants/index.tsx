@@ -1,81 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { AdminLayout } from '../../components/AdminLayout';
-import { api } from '../../services/api';
-import { matiereService, enseignantService } from '../../services';
-import {
-  Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2,
-  BookOpen, BookMarked, X, CheckCircle,
-} from 'lucide-react';
-import { Matiere } from '../../types';
-
-interface Teacher {
-  id: string;
-  utilisateurId: string;
-  prenom: string;
-  matricule: string;
-  specialite?: string;
-  utilisateur?: { email: string; nom: string };
-}
-
-interface TeacherForm {
-  nom: string;
-  prenom: string;
-  email: string;
-  matricule: string;
-  specialite: string;
-  password: string;
-}
-
-const EMPTY_FORM: TeacherForm = {
-  nom: '', prenom: '', email: '', matricule: '', specialite: '', password: '',
-};
+import React from 'react';
+import { AdminLayout } from '../../../components/AdminLayout';
+import { Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2, BookOpen, BookMarked, X, CheckCircle, Search } from 'lucide-react';
+import { useEnseignants } from './useEnseignants';
+import { Teacher, EMPTY_FORM } from './types';
+import { enseignantService } from '../../../services';
 
 export const GestionEnseignants: React.FC = () => {
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [matieres, setMatieres] = useState<Matiere[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMatieres, setLoadingMatieres] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null); // null = création
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
-  const [teacherMatieres, setTeacherMatieres] = useState<Matiere[]>([]);
-  const [formData, setFormData] = useState<TeacherForm>(EMPTY_FORM);
-  const [submitting, setSubmitting] = useState(false);
-  const [assigning, setAssigning] = useState(false);
+  const {
+    teachers, matieres, loading, loadingMatieres, error, success, showModal,
+    editingTeacher, createdCredentials, showAssignModal, selectedTeacher,
+    teacherMatieres, formData, submitting, assigning, searchTerm,
+    setSearchTerm, setShowModal, setEditingTeacher, setFormData, setError,
+    setSuccess, setCreatedCredentials, setShowAssignModal, setSelectedTeacher,
+    setTeacherMatieres, loadMatieres, handleCreate, handleUpdate, handleDelete,
+    isAssigned, handleToggleMatiere
+  } = useEnseignants();
 
-  useEffect(() => { fetchTeachers(); }, []);
-
-  const fetchTeachers = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/enseignants');
-      const data = (response.data || []).map((t: any) => ({
-        ...t,
-        id: t.utilisateurId ?? t.id,
-      }));
-      setTeachers(data);
-    } catch {
-      setError('Erreur lors du chargement des enseignants');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadMatieres = async () => {
-    if (matieres.length === 0) {
-      try {
-        setLoadingMatieres(true);
-        const data = await matiereService.getAll();
-        setMatieres(data);
-      } catch { /* silencieux */ }
-      finally { setLoadingMatieres(false); }
-    }
-  };
-
-  // ── Ouvrir modal en mode création ──────────────────────────────────────────
   const handleOpenCreate = async () => {
     setEditingTeacher(null);
     setFormData(EMPTY_FORM);
@@ -84,7 +24,6 @@ export const GestionEnseignants: React.FC = () => {
     await loadMatieres();
   };
 
-  //  Ouvrir modal en mode édition 
   const handleOpenEdit = async (teacher: Teacher) => {
     setEditingTeacher(teacher);
     setFormData({
@@ -93,7 +32,7 @@ export const GestionEnseignants: React.FC = () => {
       email: teacher.utilisateur?.email || '',
       matricule: teacher.matricule,
       specialite: teacher.specialite || '',
-      password: '', // on ne re-saisit le mot de passe que si on veut le changer
+      password: '',
     });
     setError('');
     setShowModal(true);
@@ -105,63 +44,6 @@ export const GestionEnseignants: React.FC = () => {
     setEditingTeacher(null);
     setFormData(EMPTY_FORM);
     setError('');
-  };
-
-  // Création
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setSubmitting(true);
-      setError('');
-      await api.post('/auth/admin/create-enseignant', formData);
-      setSuccess('Enseignant créé avec succès');
-      handleCloseModal();
-      await fetchTeachers();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de la création');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Mise à jour
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingTeacher) return;
-    try {
-      setSubmitting(true);
-      setError('');
-
-      const payload: any = {
-        prenom: formData.prenom,
-        matricule: formData.matricule,
-        specialite: formData.specialite || undefined,
-        // Champs de l'utilisateur parent pris en charge par le backend
-        nom: formData.nom,
-        email: formData.email,
-      };
-      if (formData.password) payload.password = formData.password;
-
-      await api.put(`/enseignants/${editingTeacher.id}`, payload);
-      setSuccess('Enseignant mis à jour avec succès');
-      handleCloseModal();
-      await fetchTeachers();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erreur lors de la mise à jour');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Supprimer cet enseignant ? Cette action est irréversible.')) return;
-    try {
-      await api.delete(`/enseignants/${id}`);
-      setSuccess('Enseignant supprimé');
-      await fetchTeachers();
-    } catch {
-      setError('Erreur lors de la suppression');
-    }
   };
 
   const handleOpenAssign = async (teacher: Teacher) => {
@@ -178,36 +60,9 @@ export const GestionEnseignants: React.FC = () => {
     }
   };
 
-  const isAssigned = (matiereId: string) =>
-    teacherMatieres.some(m => m.id === matiereId);
-
-  const handleToggleMatiere = async (matiereId: string) => {
-    if (!selectedTeacher) return;
-    try {
-      setAssigning(true);
-      setError('');
-      if (isAssigned(matiereId)) {
-        await enseignantService.removeMatiere(selectedTeacher.id, matiereId);
-        setTeacherMatieres(prev => prev.filter(m => m.id !== matiereId));
-        setSuccess('Matière retirée');
-      } else {
-        await enseignantService.assignMatiere(selectedTeacher.id, matiereId);
-        const matiere = matieres.find(m => m.id === matiereId);
-        if (matiere) setTeacherMatieres(prev => [...prev, matiere]);
-        setSuccess('Matière assignée');
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Erreur lors de l'assignation");
-    } finally {
-      setAssigning(false);
-    }
-  };
-
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
-
-        {/* ── Header ─────────────────────────────────────────────────────────── */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gestion des Enseignants</h1>
@@ -235,13 +90,37 @@ export const GestionEnseignants: React.FC = () => {
           </div>
         )}
 
-        {/* ── Tableau ────────────────────────────────────────────────────────── */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="relative w-full md:w-96">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Rechercher par nom, matricule, email ou spécialité..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 w-full bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="mb-4 text-sm text-gray-600 font-medium">
+          {teachers.filter(t => 
+            `${t.utilisateur?.nom} ${t.prenom} ${t.matricule} ${t.utilisateur?.email} ${t.specialite}`
+            .toLowerCase().includes(searchTerm.toLowerCase())
+          ).length} enseignant(s) affiché(s) sur {teachers.length} au total
+        </div>
+
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
-          ) : teachers.length === 0 ? (
+          ) : teachers.filter(t => 
+            `${t.utilisateur?.nom} ${t.prenom} ${t.matricule} ${t.utilisateur?.email} ${t.specialite}`
+            .toLowerCase().includes(searchTerm.toLowerCase())
+          ).length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500">Aucun enseignant trouvé</p>
             </div>
@@ -259,7 +138,10 @@ export const GestionEnseignants: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {teachers.map((teacher) => (
+                  {teachers.filter(t => 
+                    `${t.utilisateur?.nom} ${t.prenom} ${t.matricule} ${t.utilisateur?.email} ${t.specialite}`
+                    .toLowerCase().includes(searchTerm.toLowerCase())
+                  ).map((teacher) => (
                     <tr key={teacher.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.utilisateur?.nom}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{teacher.prenom}</td>
@@ -275,7 +157,6 @@ export const GestionEnseignants: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end items-center gap-2">
-                          {/* Assigner matières */}
                           <button
                             onClick={() => handleOpenAssign(teacher)}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
@@ -283,7 +164,6 @@ export const GestionEnseignants: React.FC = () => {
                             <BookMarked className="w-4 h-4" />
                             Matières
                           </button>
-                          {/* Modifier — maintenant actif */}
                           <button
                             onClick={() => handleOpenEdit(teacher)}
                             title="Modifier"
@@ -309,7 +189,6 @@ export const GestionEnseignants: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal Créer / Modifier Enseignant */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-8">
@@ -400,7 +279,6 @@ export const GestionEnseignants: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Assigner Matières */}
       {showAssignModal && selectedTeacher && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] flex flex-col">
@@ -481,6 +359,38 @@ export const GestionEnseignants: React.FC = () => {
                 className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
                 Terminer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {createdCredentials && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center gap-3 mb-4 text-green-600">
+              <CheckCircle className="w-8 h-8" />
+              <h2 className="text-xl font-bold text-gray-900">Compte Créé !</h2>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Le compte {createdCredentials.role} pour <strong>{createdCredentials.nom}</strong> a été créé avec succès. Un email contenant ces identifiants vient d'être envoyé.
+            </p>
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-6">
+              <div className="mb-3">
+                <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider block mb-1">Email / Identifiant</span>
+                <div className="text-gray-900 font-medium break-all">{createdCredentials.email}</div>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider block mb-1">Mot de passe temporaire</span>
+                <div className="text-gray-900 font-medium font-mono bg-white px-2 py-1 border border-gray-200 rounded">{createdCredentials.password}</div>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setCreatedCredentials(null)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                J'ai compris
               </button>
             </div>
           </div>

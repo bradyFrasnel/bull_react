@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { filiereService } from '../../services';
-import { Plus, Trash2, Edit2, AlertCircle, Loader2, CheckCircle, BookOpen } from 'lucide-react';
+import { Plus, Trash2, Edit2, AlertCircle, Loader2, CheckCircle, BookOpen, Search } from 'lucide-react';
 import { Filiere, CreateFiliereForm } from '../../types';
 
 const EMPTY_FORM: CreateFiliereForm = { nom: '', code: '' };
@@ -29,6 +29,7 @@ export const FilieresContent: React.FC<{ onSelectFiliere?: (filiereId: string) =
   // Forms state
   const [form, setForm] = useState<CreateFiliereForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchFilieres();
@@ -139,17 +140,37 @@ export const FilieresContent: React.FC<{ onSelectFiliere?: (filiereId: string) =
         </div>
       )}
 
+      {/* Barre de recherche */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="relative w-full md:w-96">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Rechercher par nom de filière ou code..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 w-full bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+          />
+        </div>
+      </div>
+
+      {/* Résumé du nombre */}
+      <div className="mb-4 text-sm text-gray-600 font-medium">
+        {filieres.filter(f => `${f.nom} ${f.code}`.toLowerCase().includes(searchTerm.toLowerCase())).length} filière(s) affichée(s)
+      </div>
+
       {/* Tableau */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
-        ) : filieres.length === 0 ? (
+        ) : filieres.filter(f => `${f.nom} ${f.code}`.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
           <div className="text-center py-16">
             <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">Aucune filière créée</p>
-            <p className="text-gray-400 text-sm mt-1">Commencez par créer votre première filière</p>
+            <p className="text-gray-500 font-medium">Aucune filière trouvée</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -163,7 +184,7 @@ export const FilieresContent: React.FC<{ onSelectFiliere?: (filiereId: string) =
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filieres.map((filiere: any) => (
+                {filieres.filter(f => `${f.nom} ${f.code}`.toLowerCase().includes(searchTerm.toLowerCase())).map((filiere: any) => (
                   <tr key={filiere.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium">
                       <button

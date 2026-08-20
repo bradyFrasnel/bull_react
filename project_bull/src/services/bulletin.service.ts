@@ -53,11 +53,13 @@ export const importExportService = {
   /**
    * Importer des notes depuis Excel
    */
-  async importerNotesExcel(file: File, semestreId: string): Promise<any> {
+  async importerNotesExcel(file: File, classeId?: string): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('semestreId', semestreId);
-    const response = await api.post('/import/notes/excel', formData, {
+    if (classeId) {
+      formData.append('classeId', classeId);
+    }
+    const response = await api.post('/import/excel', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;

@@ -2,3 +2,4 @@
 export * from './constants';
 export * from './formatters';
 export * from './calculs';
+export * from './etudiantExcel';

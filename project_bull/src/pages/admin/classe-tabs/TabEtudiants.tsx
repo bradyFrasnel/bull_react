@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../../../services/api';
+import { api, apiBulk } from '../../../services/api';
 import { Loader2, Users, Download, Upload, CheckCircle, AlertCircle, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import {
+  buildCreatePayloadFromExcelRow,
+  exportEtudiantsToInstitutionalExcel,
+  extractStudentsFromWorksheet,
+} from '../../../utils/etudiantExcel';
 
 interface TabEtudiantsProps {
   classeId: string;
+  classe?: { nom?: string; code?: string; anneeUniversitaire?: string };
 }
 
-export const TabEtudiants: React.FC<TabEtudiantsProps> = ({ classeId }) => {
+export const TabEtudiants: React.FC<TabEtudiantsProps> = ({ classeId, classe }) => {
   const [etudiants, setEtudiants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
@@ -30,77 +36,15 @@ export const TabEtudiants: React.FC<TabEtudiantsProps> = ({ classeId }) => {
     }
   };
 
-  // ── Exporter un fichier Excel pré-rempli ou la liste des étudiants ─────────────
   const handleExportExcel = () => {
-    let exportData: any[] = [];
-
-    if (etudiants.length > 0) {
-      exportData = etudiants.map((e) => ({
-        Matricule: e.matricule || '',
-        Nom: e.utilisateur?.nom || '',
-        Prénom: e.prenom || '',
-        Email: e.utilisateur?.email || '',
-        'Mot de passe': 'pass1234',
-        'Date Naissance (AAAA-MM-JJ)': e.date_naissance ? e.date_naissance.split('T')[0] : '',
-        'Lieu Naissance': e.lieu_naissance || '',
-        'Type BAC': e.bac_type || '',
-        'Année BAC': e.annee_bac || new Date().getFullYear(),
-        Provenance: e.provenance || '',
-        Statut: e.statut || 'INSCRIT',
-      }));
-    } else {
-      // Données pré-remplies d'exemple pour l'inscription en masse
-      exportData = [
-        {
-          Matricule: '2024ASUR001',
-          Nom: 'MBA NSOME',
-          Prénom: 'Yannick Lionel',
-          Email: 'yannick.mba@asur.ga',
-          'Mot de passe': 'pass1234',
-          'Date Naissance (AAAA-MM-JJ)': '2001-05-15',
-          'Lieu Naissance': 'Libreville',
-          'Type BAC': 'C',
-          'Année BAC': '2022',
-          Provenance: 'Lycée Léon MBA',
-          Statut: 'INSCRIT',
-        },
-        {
-          Matricule: '2024ASUR002',
-          Nom: 'YESSA FAYE',
-          Prénom: 'David Almond',
-          Email: 'david.yessa@asur.ga',
-          'Mot de passe': 'pass1234',
-          'Date Naissance (AAAA-MM-JJ)': '2000-09-13',
-          'Lieu Naissance': 'Port-Gentil',
-          'Type BAC': 'D',
-          'Année BAC': '2021',
-          Provenance: 'Lycée National',
-          Statut: 'INSCRIT',
-        },
-      ];
-    }
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    ws['!cols'] = [
-      { wch: 15 }, // Matricule
-      { wch: 20 }, // Nom
-      { wch: 20 }, // Prénom
-      { wch: 28 }, // Email
-      { wch: 15 }, // Password
-      { wch: 26 }, // Date Naiss
-      { wch: 18 }, // Lieu Naiss
-      { wch: 12 }, // Type BAC
-      { wch: 12 }, // Année BAC
-      { wch: 25 }, // Provenance
-      { wch: 14 }, // Statut
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Etudiants');
-    XLSX.writeFile(wb, 'inscription_etudiants_pre_rempli.xlsx');
+    exportEtudiantsToInstitutionalExcel(etudiants, {
+      classeNom: classe?.nom,
+      classeCode: classe?.code,
+      anneeUniversitaire: classe?.anneeUniversitaire,
+    });
   };
 
-  // ── Importer un fichier Excel pour inscription en masse ─────────────────────
+  // ── Importer un fichier Excel (modèle DAR_A ou classeur multi-onglets ASUR) ───
   const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -114,58 +58,88 @@ export const TabEtudiants: React.FC<TabEtudiantsProps> = ({ classeId }) => {
       try {
         const bstr = evt.target?.result;
         const wb = XLSX.read(bstr, { type: 'binary' });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const data: any[] = XLSX.utils.sheet_to_json(ws);
 
-        if (data.length === 0) {
-          throw new Error('Le fichier Excel est vide.');
+        // ── Détection automatique du type de classeur ──────────────────────
+        // Si le classeur a plusieurs onglets avec des noms de matières → format ASUR multi-onglets
+        const ONGLETS_IGNORES = ['absence', 'absences', 'bulletin', 'tabnot', 'tabnotss',
+          'resultat', 'recap', 'jury', 'raz', 'lan', 'envwin', 'envlinx',
+          'interop', 'crypt', 'prev', 'contrl', 'ccna'];
+
+        const ongletsNotes = wb.SheetNames.filter(
+          (n) => !ONGLETS_IGNORES.some((k) => n.toLowerCase().includes(k))
+        );
+
+        const premierSheet = wb.Sheets[wb.SheetNames[0]];
+        const rows2D: unknown[][] = XLSX.utils.sheet_to_json(premierSheet, { header: 1, defval: '' });
+        const texteDebut = rows2D.slice(0, 15).flat().map((v) => String(v).toLowerCase()).join(' ');
+        const estFormatASUR = texteDebut.includes('mati') || texteDebut.includes('coefficient') ||
+          texteDebut.includes('semestre') || wb.SheetNames.length > 3;
+
+        if (estFormatASUR && ongletsNotes.length > 1) {
+          // ── FORMAT ASUR MULTI-ONGLETS → envoyer au backend /import/excel ──
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('classeId', classeId); // rattacher à la classe courante
+          const res = await apiBulk.post('/import/excel', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 300000, // 5 minutes pour les gros classeurs
+          });
+          const data = res.data;
+          setSuccess(
+            `Import réussi ! ${data.nbOngletstraites} matière(s) traitée(s) | ` +
+            `${data.totalEtudiantsCreees} étudiant(s) créé(s) | ` +
+            `${data.totalNotesImportees} note(s) importée(s)` +
+            (data.totalErreurs > 0 ? ` | ${data.totalErreurs} erreur(s) ignorée(s)` : '')
+          );
+          await fetchEtudiants();
+          return;
+        }
+
+        // ── FORMAT DAR_A (liste étudiants simple) → traitement frontend ────
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const { validRows, errors } = extractStudentsFromWorksheet(ws);
+
+        if (validRows.length === 0) {
+          const detail = errors.length
+            ? errors.slice(0, 5).map((e) => `Ligne ${e.rowNumber}: ${e.message}`).join(' | ')
+            : "Aucune donnée d'étudiant valide n'a été trouvée. Si c'est un classeur multi-onglets ASUR, vérifiez que les onglets contiennent Classe, Matière et Coefficient.";
+          throw new Error(detail);
         }
 
         let createdCount = 0;
-        let errorsCount = 0;
+        let errorsCount = errors.length;
+        let lastErrorMsg = '';
 
-        for (const row of data) {
-          if (!row.Matricule || !row.Nom || !row.Prénom || !row.Email) continue;
-
+        for (let i = 0; i < validRows.length; i++) {
+          const payload = buildCreatePayloadFromExcelRow(validRows[i], i, { classeId });
           try {
-            await api.post('/auth/admin/create-etudiant', {
-              matricule: String(row.Matricule).trim(),
-              nom: String(row.Nom).trim(),
-              prenom: String(row.Prénom).trim(),
-              email: String(row.Email).trim(),
-              password: String(row['Mot de passe'] || 'pass1234').trim(),
-              date_naissance: row['Date Naissance (AAAA-MM-JJ)']
-                ? new Date(row['Date Naissance (AAAA-MM-JJ)']).toISOString()
-                : new Date().toISOString(),
-              lieu_naissance: String(row['Lieu Naissance'] || '-'),
-              bac_type: String(row['Type BAC'] || 'C'),
-              annee_bac: parseInt(String(row['Année BAC'] || '2023')),
-              provenance: String(row.Provenance || '-'),
-              statut: String(row.Statut || 'INSCRIT'),
-              classeId: classeId,
-            });
+            await api.post('/auth/admin/create-etudiant', payload);
             createdCount++;
-          } catch (err) {
-            console.error('Erreur inscription étudiant:', row, err);
+          } catch (err: any) {
+            console.error('Erreur inscription étudiant:', validRows[i], err);
             errorsCount++;
+            lastErrorMsg = err.response?.data?.message || err.message || 'Erreur API';
           }
         }
 
+        const skippedMsg = errors.length
+          ? ` ${errors.length} ligne(s) ignorée(s) (champs obligatoires manquants).`
+          : '';
+
         if (createdCount > 0) {
           setSuccess(
-            `${createdCount} étudiant(s) inscrit(s) en masse avec succès ! ${
-              errorsCount > 0 ? `(${errorsCount} erreur(s))` : ''
-            }`
+            `${createdCount} étudiant(s) inscrit(s) avec succès !${
+              errorsCount > 0 ? ` (${errorsCount} erreur(s))` : ''
+            }${skippedMsg}`
           );
           await fetchEtudiants();
         } else {
           setError(
-            `Aucun étudiant n'a pu être inscrit. Vérifiez le format du fichier (erreurs: ${errorsCount}).`
+            `Aucun étudiant n'a pu être inscrit.${skippedMsg} ${lastErrorMsg ? `(Erreur: ${lastErrorMsg})` : ''}`
           );
         }
       } catch (err: any) {
-        setError(err.message || 'Erreur lors de la lecture du fichier Excel.');
+        setError(err.response?.data?.message || err.message || 'Erreur lors de la lecture du fichier Excel.');
       } finally {
         setImporting(false);
         e.target.value = '';
@@ -204,7 +178,7 @@ export const TabEtudiants: React.FC<TabEtudiantsProps> = ({ classeId }) => {
             Liste des étudiants inscrits ({etudiants.length})
           </h2>
           <p className="text-xs text-gray-500">
-            Importez ou exportez les dossiers étudiants sous format Excel.
+            Colonnes obligatoires : Nom, Prénom, Date et Lieu de naissance, Sexe (modèle DAR_A) — ou classeur multi-onglets ASUR (relevés de notes).
           </p>
         </div>
 
@@ -241,7 +215,7 @@ export const TabEtudiants: React.FC<TabEtudiantsProps> = ({ classeId }) => {
           <FileSpreadsheet className="w-12 h-12 text-indigo-400 mx-auto mb-3" />
           <h3 className="text-base font-semibold text-gray-900">Aucun étudiant inscrit dans cette classe</h3>
           <p className="text-sm text-gray-500 max-w-md mx-auto mt-1 mb-4">
-            Téléchargez le fichier Excel pré-rempli, complétez les données de vos étudiants et cliquez sur "Importer Excel" pour les inscrire en masse.
+            Importez le classeur multi-onglets ASUR (relevés de notes par matière) ou le fichier modèle DAR_A (liste étudiants).
           </p>
           <button
             onClick={handleExportExcel}
