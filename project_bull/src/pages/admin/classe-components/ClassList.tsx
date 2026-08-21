@@ -25,7 +25,7 @@ export const ClassList: React.FC<ClassListProps> = ({
   const filteredClasses = classes.filter(c => 
     (!filiereId || (c as any).filiere?.id === filiereId || (c as any).filiereId === filiereId) && 
     `${c.nom} ${c.code}`.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => a.nom.localeCompare(b.nom));
 
   return (
     <div className="overflow-x-auto">

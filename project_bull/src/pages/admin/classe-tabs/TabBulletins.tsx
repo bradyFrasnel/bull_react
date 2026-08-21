@@ -29,7 +29,7 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const etudiants = classe?.etudiants || [];
+  const etudiants = (classe?.etudiants || []).sort((a: any, b: any) => (a.utilisateur?.nom || '').localeCompare(b.utilisateur?.nom || ''));
 
   useEffect(() => {
     const loadSemestres = async () => {
@@ -76,7 +76,7 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
       if (bulletinType === 'semestre') {
         const raw = await bulletinService.getRecapPromotion(selectedSemestreId);
         if (raw?.etudiants) {
-          setRecapRows(raw.etudiants);
+          setRecapRows(raw.etudiants.sort((a: any, b: any) => (a.nom || '').localeCompare(b.nom || '')));
         }
       } else {
         const rows: any[] = [];
@@ -139,7 +139,55 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
       setPrinting(true);
       let raw;
       if (bulletinType === 'semestre') {
-        raw = await bulletinService.getBulletinSemestre(etudiantId, selectedSemestreId);
+        const res = await bulletinService.getBulletinSemestre(etudiantId, selectedSemestreId);
+        // Map backend response to BulletinSemestreData shape expected by BulletinDocument
+        raw = {
+          type: "semestre" as const,
+          etudiant: {
+            nom: res.etudiant?.nom ?? "",
+            prenom: res.etudiant?.prenom ?? "",
+            matricule: res.etudiant?.matricule ?? "",
+            dateNaissance: res.etudiant?.dateNaissance,
+            lieuNaissance: res.etudiant?.lieuNaissance,
+          },
+          semestre: {
+            code: res.semestre?.code ?? "",
+            libelle: res.semestre?.libelle ?? "",
+            anneeUniversitaire: res.semestre?.anneeUniversitaire ?? "",
+          },
+          ues: (res.ues || []).map((ue: any) => ({
+            code: ue.code,
+            libelle: ue.libelle,
+            creditsTotal: ue.creditsTotal ?? 0,
+            creditsAcquis: ue.creditsAcquis ?? 0,
+            acquise: ue.acquise ?? false,
+            compense: ue.compensee ?? false,
+            moyenne: ue.moyenne,
+            moyenneClasse: ue.moyenneClasse ?? null,
+            matieres: (ue.matieres || []).map((m: any) => ({
+              libelle: m.libelle,
+              coefficient: m.coefficient,
+              credits: m.credits,
+              cc: m.noteCC,
+              examen: m.noteExamen,
+              rattrapage: m.noteRattrapage,
+              moyenne: m.moyenne,
+              moyenneClasse: m.moyenneClasse ?? null,
+            })),
+          })),
+          moyenneSemestre: res.resultat?.moyenneSemestre ?? null,
+          rangSemestre: res.resultat?.rang ?? null,
+          creditsTotal: res.resultat?.creditsTotal ?? 30,
+          creditsAcquis: res.resultat?.creditsAcquis ?? 0,
+          valide: res.resultat?.valide ?? false,
+          statistiques: res.statistiques ? {
+            moyenneClasse: res.statistiques.moyenneClasse,
+            min: res.statistiques.noteMin,
+            max: res.statistiques.noteMax,
+            ecartType: res.statistiques.ecartType,
+            nbEtudiants: res.statistiques.nbEtudiants,
+          } : undefined,
+        };
       } else {
         const res = await bulletinService.getBulletinAnnuel(etudiantId);
         raw = {
@@ -159,6 +207,7 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
           creditsAcquis: res.creditsAcquis ?? 0,
           decisionJury: res.decisionJury,
           mention: res.mention,
+          rangAnnuel: res.rangAnnuel,
           statistiques: res.statistiques
         };
       }
@@ -184,7 +233,52 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
         recapRows.map(row => {
           const id = row.etudiantId || row.id || row.matricule;
           if (bulletinType === 'semestre') {
-            return bulletinService.getBulletinSemestre(id, selectedSemestreId).catch(() => null);
+            return bulletinService.getBulletinSemestre(id, selectedSemestreId).then(res => ({
+              type: "semestre" as const,
+              etudiant: {
+                nom: res.etudiant?.nom ?? "",
+                prenom: res.etudiant?.prenom ?? "",
+                matricule: res.etudiant?.matricule ?? "",
+                dateNaissance: res.etudiant?.dateNaissance,
+                lieuNaissance: res.etudiant?.lieuNaissance,
+              },
+              semestre: {
+                code: res.semestre?.code ?? "",
+                libelle: res.semestre?.libelle ?? "",
+                anneeUniversitaire: res.semestre?.anneeUniversitaire ?? "",
+              },
+              ues: (res.ues || []).map((ue: any) => ({
+                code: ue.code,
+                libelle: ue.libelle,
+                creditsTotal: ue.creditsTotal ?? 0,
+                creditsAcquis: ue.creditsAcquis ?? 0,
+                acquise: ue.acquise ?? false,
+                compense: ue.compensee ?? false,
+                moyenne: ue.moyenne,
+                moyenneClasse: ue.moyenneClasse ?? null,
+                matieres: (ue.matieres || []).map((m: any) => ({
+                  libelle: m.libelle,
+                  coefficient: m.coefficient,
+                  credits: m.credits,
+                  cc: m.noteCC,
+                  examen: m.noteExamen,
+                  rattrapage: m.noteRattrapage,
+                  moyenne: m.moyenne,
+                  moyenneClasse: m.moyenneClasse ?? null,
+                })),
+              })),
+              moyenneSemestre: res.resultat?.moyenneSemestre ?? null,
+              creditsTotal: res.resultat?.creditsTotal ?? 30,
+              creditsAcquis: res.resultat?.creditsAcquis ?? 0,
+              valide: res.resultat?.valide ?? false,
+              statistiques: res.statistiques ? {
+                moyenneClasse: res.statistiques.moyenneClasse,
+                min: res.statistiques.noteMin,
+                max: res.statistiques.noteMax,
+                ecartType: res.statistiques.ecartType,
+                nbEtudiants: res.statistiques.nbEtudiants,
+              } : undefined,
+            })).catch(() => null);
           } else {
             return bulletinService.getBulletinAnnuel(id).then(res => ({
               type: "annuel",

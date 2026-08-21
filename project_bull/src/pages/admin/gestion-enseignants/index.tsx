@@ -60,6 +60,15 @@ export const GestionEnseignants: React.FC = () => {
     }
   };
 
+  const filteredTeachers = teachers.filter(t => 
+    `${t.utilisateur?.nom} ${t.prenom} ${t.matricule} ${t.utilisateur?.email} ${t.specialite}`
+    .toLowerCase().includes(searchTerm.toLowerCase())
+  ).sort((a, b) => {
+    const nomA = a.utilisateur?.nom || '';
+    const nomB = b.utilisateur?.nom || '';
+    return nomA.localeCompare(nomB);
+  });
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
@@ -106,10 +115,7 @@ export const GestionEnseignants: React.FC = () => {
         </div>
 
         <div className="mb-4 text-sm text-gray-600 font-medium">
-          {teachers.filter(t => 
-            `${t.utilisateur?.nom} ${t.prenom} ${t.matricule} ${t.utilisateur?.email} ${t.specialite}`
-            .toLowerCase().includes(searchTerm.toLowerCase())
-          ).length} enseignant(s) affiché(s) sur {teachers.length} au total
+          {filteredTeachers.length} enseignant(s) affiché(s) sur {teachers.length} au total
         </div>
 
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -117,10 +123,7 @@ export const GestionEnseignants: React.FC = () => {
             <div className="flex justify-center items-center h-64">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
-          ) : teachers.filter(t => 
-            `${t.utilisateur?.nom} ${t.prenom} ${t.matricule} ${t.utilisateur?.email} ${t.specialite}`
-            .toLowerCase().includes(searchTerm.toLowerCase())
-          ).length === 0 ? (
+          ) : filteredTeachers.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500">Aucun enseignant trouvé</p>
             </div>
@@ -138,10 +141,7 @@ export const GestionEnseignants: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {teachers.filter(t => 
-                    `${t.utilisateur?.nom} ${t.prenom} ${t.matricule} ${t.utilisateur?.email} ${t.specialite}`
-                    .toLowerCase().includes(searchTerm.toLowerCase())
-                  ).map((teacher) => (
+                  {filteredTeachers.map((teacher) => (
                     <tr key={teacher.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{teacher.utilisateur?.nom}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{teacher.prenom}</td>

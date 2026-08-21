@@ -1,20 +1,18 @@
 import React from 'react';
 import { AdminLayout } from '../../../components/AdminLayout';
-import { Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2, CheckCircle, Download, Upload, Search, Filter } from 'lucide-react';
+import { Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2, CheckCircle, Download, Search, Filter } from 'lucide-react';
 import { useEtudiants } from './useEtudiants';
 import { Student, EMPTY_FORM, BAC_TYPES } from './types';
 import { ConfirmModal } from '../../../components/ConfirmModal';
-import { exportEtudiantsToInstitutionalExcel } from '../../../utils/etudiantExcel';
 
 export const GestionEtudiants: React.FC = () => {
   const {
     students, loading, error, success, showModal, editingStudent, formData,
-    submitting, importing, classes, filieres, createdCredentials,
+    submitting, classes, filieres, createdCredentials,
     searchTerm, selectedFiliereId, selectedClasseId, studentToDelete,
     setSearchTerm, setSelectedFiliereId, setSelectedClasseId, setStudentToDelete,
     setShowModal, setEditingStudent, setFormData, setCreatedCredentials,
-    handleCreate, handleUpdate, handleDelete, confirmDelete, handleImportExcel,
-    page, setPage, limit, setLimit, total
+    handleCreate, handleUpdate, handleDelete, confirmDelete
   } = useEtudiants();
 
   const filteredClasses = selectedFiliereId 
@@ -27,13 +25,28 @@ export const GestionEtudiants: React.FC = () => {
     const matchClasse = !selectedClasseId || s.classeId === selectedClasseId;
     const matchFiliere = !selectedFiliereId || (s.classeId && filteredClasses.some(c => c.id === s.classeId));
     return matchSearch && matchClasse && matchFiliere;
+  }).sort((a, b) => {
+    const nomA = a.utilisateur?.nom || '';
+    const nomB = b.utilisateur?.nom || '';
+    return nomA.localeCompare(nomB);
   });
 
   const handleExportExcel = () => {
-    exportEtudiantsToInstitutionalExcel(students, {
-      classeNom: 'Toutes les Classes',
-      anneeUniversitaire: '2025-2026',
-      includeClasseColumn: true,
+    // Simple export using XLSX
+    const data = filteredStudents.map((s, i) => ({
+      'N°': i + 1,
+      'Matricule': s.matricule,
+      'Nom': s.utilisateur?.nom || '',
+      'Prénom': s.prenom,
+      'Email': s.utilisateur?.email || '',
+      'Classe': s.classe?.nom || 'Non assigné',
+      'Statut': s.statut,
+    }));
+    import('xlsx').then(XLSX => {
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Etudiants');
+      XLSX.writeFile(wb, 'Liste_Etudiants.xlsx');
     });
   };
 
@@ -75,33 +88,20 @@ export const GestionEtudiants: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gestion des Étudiants</h1>
             <p className="text-gray-600 mt-1">
-              Inscription individuelle ou en masse via fichier Excel (modèle DAR_A)
+              Inscription individuelle ou import via le classeur de notes (dans la page d'une classe)
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={handleExportExcel}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors shadow-sm"
-              title="Exporter ou télécharger le fichier modèle pré-rempli"
-            >
-              <Download className="w-4 h-4 text-emerald-600" />
-              {filteredStudents.length > 0 ? 'Exporter la liste' : 'Modèle pré-rempli'}
-            </button>
-            <label className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium transition-colors cursor-pointer shadow-sm">
-              {importing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Upload className="w-4 h-4" />
-              )}
-              Importer Excel
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                className="hidden"
-                onChange={handleImportExcel}
-                disabled={importing}
-              />
-            </label>
+            {filteredStudents.length > 0 && (
+              <button
+                onClick={handleExportExcel}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors shadow-sm"
+                title="Exporter la liste des étudiants"
+              >
+                <Download className="w-4 h-4 text-emerald-600" />
+                Exporter la liste
+              </button>
+            )}
             <button
               onClick={handleOpenCreate}
               className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all active:scale-95 text-sm font-medium shadow-sm"
@@ -238,47 +238,6 @@ export const GestionEtudiants: React.FC = () => {
                   ))}
                 </tbody>
               </table>
-            </div>
-
-            {/* Pagination UI */}
-            <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <span>Afficher</span>
-                <select
-                  value={limit}
-                  onChange={(e) => {
-                    setLimit(Number(e.target.value));
-                    setPage(1);
-                  }}
-                  className="border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-                <span>par page (Total: {total})</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 text-sm"
-                >
-                  Précédent
-                </button>
-                <span className="text-sm text-gray-600">
-                  Page {page} sur {Math.max(1, Math.ceil(total / limit))}
-                </span>
-                <button
-                  onClick={() => setPage(p => p + 1)}
-                  disabled={page >= Math.ceil(total / limit)}
-                  className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 text-sm"
-                >
-                  Suivant
-                </button>
-              </div>
             </div>
             </>
           )}

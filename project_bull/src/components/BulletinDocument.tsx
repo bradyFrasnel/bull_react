@@ -118,20 +118,17 @@ const getMoyenneColorStyle = (score?: number | null): React.CSSProperties => {
   if (score === undefined || score === null || isNaN(score)) return {};
   if (score < 6) {
     return {
-      backgroundColor: "#fee2e2", // Rouge clair
-      color: "#991b1b",           // Rouge foncé
+      color: "red",
       fontWeight: "bold",
     };
   } else if (score < 10) {
     return {
-      backgroundColor: "#fef08a", // Jaune clair
-      color: "#854d0e",           // Brun / Jaune foncé
+      color: "#eab308", // Jaune (Tailwind yellow-500)
       fontWeight: "bold",
     };
   } else {
     return {
-      backgroundColor: "#dcfce7", // Vert clair
-      color: "#166534",           // Vert foncé
+      color: "green",
       fontWeight: "bold",
     };
   }
@@ -171,8 +168,8 @@ const BulletinSemestrielDoc: React.FC<{ d: BulletinSemestreData }> = ({ d }) => 
     d.etudiant.classeNom ||
     "Licence Professionnelle Réseaux et Télécommunications Option Administration et Sécurité des Réseaux (ASUR)";
 
-  const rangText = d.statistiques?.rang
-    ? `${d.statistiques.rang}${d.statistiques.rang === 1 ? "er" : "ème"}/${d.statistiques.nbEtudiants || ""}`
+  const rangText = d.rangSemestre
+    ? `${d.rangSemestre}${d.rangSemestre === 1 ? "er" : "ème"}${d.statistiques?.nbEtudiants ? `/${d.statistiques.nbEtudiants}` : ""}`
     : "Non classé";
 
   const mentionText =

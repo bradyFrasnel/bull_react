@@ -95,7 +95,7 @@ export const useSaisirNotes = () => {
             absenceId: studentAbsence?.id,
           };
         });
-        setRows(mapped);
+        setRows(mapped.sort((a, b) => (a.nom || '').localeCompare(b.nom || '')));
       } else {
         const etudiants = await etudiantService.getAll();
         setRows(etudiants.map(e => {
@@ -109,7 +109,7 @@ export const useSaisirNotes = () => {
             heuresAbsence: studentAbsence ? String(studentAbsence.heures) : '',
             absenceId: studentAbsence?.id,
           };
-        }));
+        }).sort((a, b) => (a.nom || '').localeCompare(b.nom || '')));
       }
     } catch (err: any) {
       try {
@@ -128,7 +128,7 @@ export const useSaisirNotes = () => {
             heuresAbsence: studentAbsence ? String(studentAbsence.heures) : '',
             absenceId: studentAbsence?.id,
           };
-        }));
+        }).sort((a, b) => (a.nom || '').localeCompare(b.nom || '')));
       } catch {
         setError('Erreur lors du chargement du relevé');
       }

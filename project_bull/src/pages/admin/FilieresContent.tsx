@@ -110,6 +110,10 @@ export const FilieresContent: React.FC<{ onSelectFiliere?: (filiereId: string) =
     }
   };
 
+  const filteredFilieres = filieres
+    .filter(f => `${f.nom} ${f.code}`.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => a.nom.localeCompare(b.nom));
+
   return (
     <div>
       {/* Header */}
@@ -158,7 +162,7 @@ export const FilieresContent: React.FC<{ onSelectFiliere?: (filiereId: string) =
 
       {/* Résumé du nombre */}
       <div className="mb-4 text-sm text-gray-600 font-medium">
-        {filieres.filter(f => `${f.nom} ${f.code}`.toLowerCase().includes(searchTerm.toLowerCase())).length} filière(s) affichée(s)
+        {filteredFilieres.length} filière(s) affichée(s)
       </div>
 
       {/* Tableau */}
@@ -167,7 +171,7 @@ export const FilieresContent: React.FC<{ onSelectFiliere?: (filiereId: string) =
           <div className="flex justify-center items-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
-        ) : filieres.filter(f => `${f.nom} ${f.code}`.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+        ) : filteredFilieres.length === 0 ? (
           <div className="text-center py-16">
             <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 font-medium">Aucune filière trouvée</p>
@@ -184,7 +188,7 @@ export const FilieresContent: React.FC<{ onSelectFiliere?: (filiereId: string) =
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filieres.filter(f => `${f.nom} ${f.code}`.toLowerCase().includes(searchTerm.toLowerCase())).map((filiere: any) => (
+                {filteredFilieres.map((filiere: any) => (
                   <tr key={filiere.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium">
                       <button

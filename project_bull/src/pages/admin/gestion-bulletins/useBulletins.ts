@@ -43,10 +43,10 @@ export const useBulletins = () => {
     try {
       setLoading(true);
       const [e, s, c, f] = await Promise.all([
-        etudiantService.getAll(),
+        etudiantService.getAll().then(data => data.sort((a: any, b: any) => (a.utilisateur?.nom || '').localeCompare(b.utilisateur?.nom || ''))),
         semestreService.getAll(),
-        api.get('/classes').then(r => r.data).catch(() => []),
-        api.get('/filieres').then(r => r.data).catch(() => [])
+        api.get('/classes').then(r => r.data.sort((a: any, b: any) => (a.nom || '').localeCompare(b.nom || ''))).catch(() => []),
+        api.get('/filieres').then(r => r.data.sort((a: any, b: any) => (a.nom || '').localeCompare(b.nom || ''))).catch(() => [])
       ]);
       setEtudiants(e); setSemestres(s); setClasses(c); setFilieres(f);
     } catch (err: any) {
@@ -87,6 +87,7 @@ export const useBulletins = () => {
           compense: ue.compensee ?? false,
         })),
         moyenneSemestre: raw.resultat?.moyenneSemestre,
+        rangSemestre: raw.resultat?.rang,
         creditsTotal: raw.resultat?.creditsTotal ?? 30,
         creditsAcquis: raw.resultat?.creditsAcquis ?? 0,
         valide: raw.resultat?.valide,
@@ -123,6 +124,7 @@ export const useBulletins = () => {
         moyenneAnnuelle: raw.moyenneAnnuelle,
         creditsTotal: raw.creditsTotal ?? 60, creditsAcquis: raw.creditsAcquis ?? 0,
         decisionJury: raw.decisionJury, mention: raw.mention,
+        rangAnnuel: raw.rangAnnuel,
         statistiques: raw.statistiques,
       };
     } catch { /* pas de données */ }
@@ -207,7 +209,7 @@ export const useBulletins = () => {
       setLoadingRecap(true); setRecapRows([]);
       try {
         const raw = await bulletinService.getRecapPromotion(selectedSemestreId);
-        if (raw?.etudiants) { setRecapRows(raw.etudiants); setMode('recap'); return; }
+        if (raw?.etudiants) { setRecapRows(raw.etudiants.sort((a: any, b: any) => (a.nom || '').localeCompare(b.nom || ''))); setMode('recap'); return; }
       } catch { /* fallback */ }
       const rows: RecapRow[] = [];
       for (const etudiant of etudiants) {
@@ -223,7 +225,7 @@ export const useBulletins = () => {
           rows.push({ matricule: etudiant.matricule, nom: etudiant.utilisateur?.nom ?? '', prenom: etudiant.prenom, creditsAcquis: 0 });
         }
       }
-      setRecapRows(rows); setMode('recap');
+      setRecapRows(rows.sort((a, b) => (a.nom || '').localeCompare(b.nom || ''))); setMode('recap');
     } catch { toast.error('Erreur lors du chargement du récapitulatif'); }
     finally { setLoadingRecap(false); }
   };
@@ -326,7 +328,11 @@ export const useBulletins = () => {
 
   const filteredEtudiants = etudiants.filter(e =>
     `${e.utilisateur?.nom} ${e.prenom} ${e.matricule}`.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => {
+    const nomA = a.utilisateur?.nom || '';
+    const nomB = b.utilisateur?.nom || '';
+    return nomA.localeCompare(nomB);
+  });
   const doneCount = promotionRows.filter(r => r.status === 'done').length;
   const errorCount = promotionRows.filter(r => r.status === 'error').length;
 

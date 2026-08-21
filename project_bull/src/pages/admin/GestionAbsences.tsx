@@ -43,8 +43,8 @@ export const GestionAbsences: React.FC = () => {
     try {
       setLoading(true);
       const [etudiantsData, matieresData] = await Promise.all([
-        etudiantService.getAll(),
-        matiereService.getAll(),
+        etudiantService.getAll().then(data => data.sort((a: any, b: any) => (a.utilisateur?.nom || '').localeCompare(b.utilisateur?.nom || ''))),
+        matiereService.getAll().then(data => data.sort((a: any, b: any) => (a.libelle || '').localeCompare(b.libelle || ''))),
       ]);
       setEtudiants(etudiantsData);
       setMatieres(matieresData);

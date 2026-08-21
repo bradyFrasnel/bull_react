@@ -18,7 +18,7 @@ export const TabAbsences: React.FC<TabAbsencesProps> = ({ classeId, classe }) =>
   const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  const etudiants = classe?.etudiants || [];
+  const etudiants = (classe?.etudiants || []).sort((a: any, b: any) => (a.utilisateur?.nom || '').localeCompare(b.utilisateur?.nom || ''));
 
   // Extraire toutes les matières de la classe
   const matieres: Matiere[] = [];

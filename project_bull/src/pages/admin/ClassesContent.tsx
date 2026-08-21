@@ -79,13 +79,9 @@ export const ClassesContent: React.FC<{ filiereId?: string | null, onClearFilter
         classes={classes}
         filiereId={filiereId}
         searchTerm={searchTerm}
-        loading={loading}
-        onSearch={setSearchTerm}
-        onClearFilter={onClearFilter}
-        onOpenEdit={handleOpenEdit}
-        onOpenAssign={handleOpenAssign}
-        onOpenEtudiants={handleOpenEtudiants}
-        onDelete={handleDelete}
+        handleOpenEdit={handleOpenEdit}
+        handleOpenAssign={handleOpenAssign}
+        handleDelete={handleDelete}
       />
 
       {showModal && (
@@ -93,10 +89,11 @@ export const ClassesContent: React.FC<{ filiereId?: string | null, onClearFilter
           formData={formData}
           filieres={filieres}
           submitting={submitting}
-          editingClasse={!!editingClasse}
-          onChange={setFormData}
-          onSubmit={handleSubmit}
-          onClose={handleCloseModal}
+          editingClasse={editingClasse}
+          setFormData={setFormData}
+          handleSubmit={handleSubmit}
+          handleCloseModal={handleCloseModal}
+          error={error}
         />
       )}
 

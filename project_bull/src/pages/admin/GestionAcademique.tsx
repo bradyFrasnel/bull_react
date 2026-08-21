@@ -80,7 +80,7 @@ export const GestionAcademique: React.FC = () => {
 
   const fetchEtudiants = async () => {
     try {
-      const [e, s] = await Promise.all([etudiantService.getAll(), semestreService.getAll()]);
+      const [e, s] = await Promise.all([etudiantService.getAll().then(data => data.sort((a: any, b: any) => (a.utilisateur?.nom || '').localeCompare(b.utilisateur?.nom || ''))), semestreService.getAll()]);
       setEtudiants(e); setSemesters(s);
     } catch { /* silencieux */ }
   };

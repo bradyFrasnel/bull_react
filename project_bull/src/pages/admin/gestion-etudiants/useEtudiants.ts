@@ -3,11 +3,6 @@ import toast from 'react-hot-toast';
 import { api } from '../../../services/api';
 import { filiereService } from '../../../services/academic.service';
 import { Student, StudentForm, EMPTY_FORM } from './types';
-import * as XLSX from 'xlsx';
-import {
-  buildCreatePayloadFromExcelRow,
-  extractStudentsFromWorksheet,
-} from '../../../utils/etudiantExcel';
 
 export const useEtudiants = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -19,16 +14,10 @@ export const useEtudiants = () => {
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [formData, setFormData] = useState<StudentForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
-  const [importing, setImporting] = useState(false);
   const [classes, setClasses] = useState<{ id: string, nom: string, filiereId?: string }[]>([]);
   const [filieres, setFilieres] = useState<{ id: string, nom: string }[]>([]);
   const [createdCredentials, setCreatedCredentials] = useState<{email: string, password: string, nom: string, role: string} | null>(null);
   
-  // Pagination
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20);
-  const [total, setTotal] = useState(0);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFiliereId, setSelectedFiliereId] = useState('');
   const [selectedClasseId, setSelectedClasseId] = useState('');
@@ -54,18 +43,13 @@ export const useEtudiants = () => {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/etudiants?page=${page}&limit=${limit}`);
+      const response = await api.get(`/etudiants`);
       const responseData = response.data.data || response.data || [];
       const data = responseData.map((s: any) => ({
         ...s,
         id: s.utilisateurId ?? s.id,
       }));
       setStudents(data);
-      if (response.data.total !== undefined) {
-        setTotal(response.data.total);
-      } else {
-        setTotal(data.length);
-      }
     } catch {
       setError('Erreur lors du chargement des étudiants');
     } finally {
@@ -75,7 +59,7 @@ export const useEtudiants = () => {
 
   useEffect(() => {
     fetchStudents();
-  }, [page, limit]);
+  }, []);
 
   useEffect(() => {
     fetchClasses();
@@ -182,82 +166,12 @@ export const useEtudiants = () => {
     }
   };
 
-  const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImporting(true);
-    setError('');
-    setSuccess('');
-
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: 'binary' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const { validRows, errors } = extractStudentsFromWorksheet(ws);
-
-        if (validRows.length === 0) {
-          const detail = errors.length
-            ? errors.slice(0, 5).map((e) => `Ligne ${e.rowNumber}: ${e.message}`).join(' | ')
-            : "Aucune donnée d'étudiant valide n'a été trouvée.";
-          throw new Error(detail);
-        }
-
-        let createdCount = 0;
-        let errorsCount = errors.length;
-        let lastErrorMsg = '';
-
-        for (let i = 0; i < validRows.length; i++) {
-          const payload = buildCreatePayloadFromExcelRow(validRows[i], i, { classeId: null });
-          try {
-            await api.post('/auth/admin/create-etudiant', payload);
-            createdCount++;
-          } catch (err: any) {
-            console.error('Erreur inscription étudiant:', validRows[i], err);
-            errorsCount++;
-            lastErrorMsg = err.response?.data?.message || err.message || 'Erreur API';
-          }
-        }
-
-        const skippedMsg = errors.length
-          ? ` ${errors.length} ligne(s) ignorée(s) (champs obligatoires manquants).`
-          : '';
-
-        if (createdCount > 0) {
-          toast.success(
-            `${createdCount} étudiant(s) inscrit(s) avec succès !${
-              errorsCount > 0 ? ` (${errorsCount} erreur(s))` : ''
-            }${skippedMsg}`
-          );
-          await fetchStudents();
-        } else {
-          toast.error(
-            `Aucun étudiant n'a pu être inscrit.${skippedMsg} ${lastErrorMsg ? "(Erreur: " + lastErrorMsg + ")" : ""}`
-          );
-        }
-      } catch (err: any) {
-        toast.error(err.message || 'Erreur lors de la lecture du fichier Excel.');
-      } finally {
-        setImporting(false);
-        e.target.value = '';
-      }
-    };
-    reader.readAsBinaryString(file);
-  };
-
   return {
     students, loading, error, success, showModal, editingStudent, formData,
-    submitting, importing, classes, filieres, createdCredentials,
+    submitting, classes, filieres, createdCredentials,
     searchTerm, selectedFiliereId, selectedClasseId, studentToDelete,
     setSearchTerm, setSelectedFiliereId, setSelectedClasseId, setStudentToDelete,
     setShowModal, setEditingStudent, setFormData, setError, setSuccess, setCreatedCredentials,
-    handleCreate, handleUpdate, handleDelete, confirmDelete, handleImportExcel,
-    page,
-    setPage,
-    limit,
-    setLimit,
-    total,
+    handleCreate, handleUpdate, handleDelete, confirmDelete,
   };
 };

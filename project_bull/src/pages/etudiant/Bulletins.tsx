@@ -188,6 +188,7 @@ export const Bulletins: React.FC = () => {
         },
         ues,
         moyenneSemestre: resultat?.moyenneSemestre,
+        rangSemestre: resultat?.rang,
         creditsTotal: resultat?.creditsTotal ?? 30,
         creditsAcquis: resultat?.creditsAcquis ?? 0,
         valide: resultat?.valide,
