@@ -127,7 +127,7 @@ export const LoginForm: React.FC = () => {
       setError('');
       await login(data.nom, data.password, role);
       localStorage.removeItem(lockStorageKey);
-      navigate(getRedirectPath(role));
+      navigate(getRedirectPath(role), { replace: true });
     } catch (err: any) {
       if (err.response?.status === 429) {
         const retryHeader = Number(err.response?.headers?.['retry-after']);
@@ -245,15 +245,17 @@ export const LoginForm: React.FC = () => {
               }`}
             >
               {isLocked ? (
-                <>
+                <span key="locked" className="inline-flex items-center justify-center gap-2">
                   <Clock className="w-5 h-5" />
-                  Réessayer dans {formatCooldown(cooldownSeconds)}
-                </>
+                  <span>Réessayer dans {formatCooldown(cooldownSeconds)}</span>
+                </span>
+              ) : isSubmitting ? (
+                <span key="submitting" className="inline-flex items-center justify-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Connexion...</span>
+                </span>
               ) : (
-                <>
-                  {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {isSubmitting ? 'Connexion...' : 'Se connecter'}
-                </>
+                <span key="idle">Se connecter</span>
               )}
             </button>
           </form>
