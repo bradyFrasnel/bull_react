@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { etudiantService, semestreService, calculService } from '../../../services';
+import { etudiantService, semestreService } from '../../../services';
 import { api } from '../../../services/api';
 import { bulletinService } from '../../../services/bulletin.service';
 import { statistiquesService } from '../../../services/results.service';
@@ -31,8 +31,6 @@ export const useBulletins = () => {
   const [loadingStats, setLoadingStats] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cancelGenerationRef = useRef<boolean>(false);
@@ -283,7 +281,7 @@ export const useBulletins = () => {
     }
 
     if (classesToRecalculate.length === 0) {
-      setError('Aucune classe trouvée pour ces critères.');
+      toast.error('Aucune classe trouvée pour ces critères.');
       return;
     }
 

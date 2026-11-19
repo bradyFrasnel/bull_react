@@ -8,11 +8,9 @@ import {
   BookOpen,
   FileText,
   User,
-  GraduationCap,
   ChevronDown,
   Home,
-  Edit,
-  Layers,
+  ShieldCheck,
 } from 'lucide-react';
 import { AppBar } from './AppBar';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -27,7 +25,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const location = useLocation();
   // Sur mobile la sidebar est fermée par défaut, sur desktop ouverte
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
-  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   const handleLogout = () => { logout(); navigate('/'); };
   const isActive = (path: string) => location.pathname === path;
@@ -45,36 +42,47 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       path: `${basePath}/tableau-bord`,
     },
     {
-      label: 'Gestion Enseignants',
+      label: 'Utilisateurs',
+      icon: User,
+      submenu: [
+        { label: 'Enseignants', path: `${basePath}/enseignants` },
+        { label: 'Étudiants', path: `${basePath}/etudiants` },
+      ],
+    },
+    {
+      label: 'Académique',
       icon: BookOpen,
-      path: `${basePath}/enseignants`,
-    },
-    {
-      label: 'Gestion Étudiants',
-      icon: GraduationCap,
-      path: `${basePath}/etudiants`,
-    },
-    {
-      label: 'Gestion des Filières',
-      icon: BookOpen,
-      path: `${basePath}/filieres`,
-    },
-    {
-      label: 'Référentiel Académique',
-      icon: FileText,
       path: `${basePath}/academique`,
     },
     {
-      label: 'Modèles Bulletins',
+      label: 'Bulletins',
       icon: FileText,
-      path: `${basePath}/modeles-bulletins`,
+      submenu: [
+        { label: 'Génération', path: `${basePath}/bulletins` },
+        { label: 'Modèles', path: `${basePath}/modeles-bulletins` },
+      ],
     },
+    ...(user?.role !== 'secretariat'
+      ? [
+          {
+            label: "Journal d'audit",
+            icon: ShieldCheck,
+            path: '/admin/audit-logs',
+          },
+        ]
+      : []),
     {
       label: 'Profil',
       icon: User,
       path: `${basePath}/profil`,
     },
   ];
+
+  // Ouvrir automatiquement le sous-menu qui contient la route active
+  const activeParent = navigationItems.find((item) =>
+    item.submenu?.some((sub) => location.pathname.startsWith(sub.path)),
+  )?.label ?? null;
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(activeParent);
 
   return (
     <div className="flex h-screen bg-gray-50">

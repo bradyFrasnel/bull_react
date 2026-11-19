@@ -3,7 +3,7 @@ import { calculService, bulletinService, semestreService } from '../../../servic
 import { statistiquesService } from '../../../services/results.service';
 import { importExportService } from '../../../services/bulletin.service';
 import { AlertCircle, Loader2, CheckCircle, RefreshCw, BarChart3, Users, FileText, Download, Upload } from 'lucide-react';
-import { BulletinDocument, BulletinData, BulletinAnnuelData } from '../../../components/BulletinDocument';
+import { BulletinDocument } from '../../../components/BulletinDocument';
 import { createPortal } from 'react-dom';
 
 interface TabBulletinsProps {
@@ -34,7 +34,7 @@ export const TabBulletins: React.FC<TabBulletinsProps> = ({ classeId, classe }) 
   useEffect(() => {
     const loadSemestres = async () => {
       try {
-        let list = [];
+        let list: any[] = [];
         if (classe?.anneeUniversitaire) {
           list = await semestreService.getByAnnee(classe.anneeUniversitaire);
         }

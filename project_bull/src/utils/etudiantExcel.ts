@@ -177,7 +177,6 @@ export const buildCreatePayloadFromExcelRow = (
     sexe: row.sexeRaw.trim(),
     matricule: generateMatricule(row.nom, index),
     email: generateEmail(row.nom, row.prenom, index),
-    password: 'pass1234',
     statut: 'INSCRIT',
     classeId: options?.classeId ?? null,
   };
@@ -298,7 +297,7 @@ export const exportEtudiantsToInstitutionalExcel = (
   aoa.push([`Année académique ${options.anneeUniversitaire || '2025-2026'}`]);
   aoa.push(['']);
 
-  const headers = [...EXCEL_ETUDIANT_COLUMNS];
+  const headers: string[] = [...EXCEL_ETUDIANT_COLUMNS];
   if (options.includeClasseColumn) headers.push('Classe');
   aoa.push(headers);
 

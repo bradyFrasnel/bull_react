@@ -171,9 +171,9 @@ export const Dashboard: React.FC = () => {
                 <Users className="w-6 h-6 text-green-600" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-gray-900">Consulter Étudiants</h3>
+                <h3 className="font-semibold text-gray-900">Mes Étudiants</h3>
                 <p className="text-sm text-gray-600">
-                  Voir la liste des étudiants et leurs notes
+                  Consulter uniquement les étudiants de vos classes et matières
                 </p>
               </div>
             </button>
@@ -202,12 +202,22 @@ export const Dashboard: React.FC = () => {
                       Coef. {matiere.coefficient}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
                     <span>{matiere.credits} crédits</span>
                     {matiere.uniteEnseignement && (
                       <span className="text-xs bg-gray-100 px-2 py-1 rounded">
                         {matiere.uniteEnseignement.code}
                       </span>
+                    )}
+                    {matiere.uniteEnseignement?.semestre?.classes?.map((sc) =>
+                      sc.classe ? (
+                        <span
+                          key={sc.classe.id}
+                          className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-medium"
+                        >
+                          {sc.classe.nom}
+                        </span>
+                      ) : null,
                     )}
                   </div>
                   <button

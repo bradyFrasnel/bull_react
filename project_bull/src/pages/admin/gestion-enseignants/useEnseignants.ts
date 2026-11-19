@@ -20,6 +20,7 @@ export const useEnseignants = () => {
   const [formData, setFormData] = useState<TeacherForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchTeachers = async () => {
@@ -142,13 +143,36 @@ export const useEnseignants = () => {
     }
   };
 
+  const handleImportExcel = async (file: File) => {
+    try {
+      setImporting(true);
+      setError('');
+      setSuccess('');
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      const res = await api.post('/auth/admin/import-enseignants', formDataUpload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const { created = 0, failed = 0 } = res.data || {};
+      setSuccess(
+        `Import terminé : ${created} enseignant(s) inscrit(s)` +
+        (failed > 0 ? `, ${failed} ligne(s) en échec.` : '. Les identifiants ont été envoyés par email.')
+      );
+      await fetchTeachers();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Erreur lors de l'import Excel des enseignants");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return {
     teachers, matieres, loading, loadingMatieres, error, success, showModal,
     editingTeacher, createdCredentials, showAssignModal, selectedTeacher,
-    teacherMatieres, formData, submitting, assigning, searchTerm,
+    teacherMatieres, formData, submitting, assigning, importing, searchTerm,
     setSearchTerm, setShowModal, setEditingTeacher, setFormData, setError,
     setSuccess, setCreatedCredentials, setShowAssignModal, setSelectedTeacher,
     setTeacherMatieres, loadMatieres, handleCreate, handleUpdate, handleDelete,
-    isAssigned, handleToggleMatiere
+    isAssigned, handleToggleMatiere, handleImportExcel
   };
 };

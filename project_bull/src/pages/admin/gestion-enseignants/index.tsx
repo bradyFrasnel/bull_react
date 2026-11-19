@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { AdminLayout } from '../../../components/AdminLayout';
-import { Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2, BookOpen, BookMarked, X, CheckCircle, Search } from 'lucide-react';
+import { Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2, BookOpen, BookMarked, X, CheckCircle, Search, Upload, FileSpreadsheet } from 'lucide-react';
 import { useEnseignants } from './useEnseignants';
 import { Teacher, EMPTY_FORM } from './types';
 import { enseignantService } from '../../../services';
@@ -9,12 +9,33 @@ export const GestionEnseignants: React.FC = () => {
   const {
     teachers, matieres, loading, loadingMatieres, error, success, showModal,
     editingTeacher, createdCredentials, showAssignModal, selectedTeacher,
-    teacherMatieres, formData, submitting, assigning, searchTerm,
+    teacherMatieres, formData, submitting, assigning, importing, searchTerm,
     setSearchTerm, setShowModal, setEditingTeacher, setFormData, setError,
     setSuccess, setCreatedCredentials, setShowAssignModal, setSelectedTeacher,
     setTeacherMatieres, loadMatieres, handleCreate, handleUpdate, handleDelete,
-    isAssigned, handleToggleMatiere
+    isAssigned, handleToggleMatiere, handleImportExcel
   } = useEnseignants();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDownloadTemplate = () => {
+    const sample = [
+      {
+        'Nom': 'DUPONT',
+        'Prénom': 'Jean',
+        'Email': 'jean.dupont@inptic.ga',
+        'Matricule': 'ENS2026001',
+        'Spécialité': 'Réseaux & Sécurité',
+      },
+    ];
+    import('xlsx').then(XLSX => {
+      const ws = XLSX.utils.json_to_sheet(sample);
+      ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 28 }, { wch: 16 }, { wch: 24 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Enseignants');
+      XLSX.writeFile(wb, 'Modele_Import_Enseignants.xlsx');
+    });
+  };
 
   const handleOpenCreate = async () => {
     setEditingTeacher(null);
@@ -72,18 +93,48 @@ export const GestionEnseignants: React.FC = () => {
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Gestion des Enseignants</h1>
             <p className="text-gray-600 mt-1">Gérez les enseignants et leurs matières</p>
           </div>
-          <button
-            onClick={handleOpenCreate}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all active:scale-95"
-          >
-            <Plus className="w-5 h-5" />
-            Inscription
-          </button>
+          <div className="flex gap-2 flex-wrap">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImportExcel(file);
+                e.target.value = '';
+              }}
+            />
+            <button
+              onClick={handleDownloadTemplate}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors shadow-sm"
+              title="Télécharger le modèle Excel d'inscription des enseignants"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-blue-600" />
+              Modèle Excel
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium transition-colors shadow-sm"
+              title="Importer plusieurs enseignants depuis un fichier Excel"
+            >
+              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              Importer Excel
+            </button>
+            <button
+              onClick={handleOpenCreate}
+              className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all active:scale-95 text-sm font-medium shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              Inscription
+            </button>
+          </div>
         </div>
 
         {error && (

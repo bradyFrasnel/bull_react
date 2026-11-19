@@ -44,6 +44,8 @@ export interface ResultatSemestre {
   creditsTotal: number;
   creditsAcquis: number;
   valide: boolean;
+  rang?: number;
+  appreciation?: string;
   decision?: 'VALIDE' | 'NON_VALIDE' | 'ADMISSIBLE';
   createdAt?: string;
   updatedAt?: string;

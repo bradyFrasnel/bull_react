@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api, apiBulk } from '../../../services/api';
-import { Loader2, Users, Download, Upload, CheckCircle, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import { Loader2, Download, Upload, CheckCircle, AlertCircle, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface TabEtudiantsProps {
@@ -70,11 +70,16 @@ export const TabEtudiants: React.FC<TabEtudiantsProps> = ({ classeId, classe }) 
       });
 
       const data = res.data;
+      const nbOnglets = data.nbOngletstraites ?? data.nbOngletsTraites ?? 0;
+      const nbEtudiants = data.totalEtudiantsCreees ?? data.nbEtudiantsCreees ?? 0;
+      const nbMisAJour = data.totalEtudiantsMisAJour ?? 0;
+      const nbNotes = data.totalNotesImportees ?? data.nbNotesImportees ?? 0;
+      const nbErreurs = data.totalErreurs ?? data.erreurs?.length ?? 0;
       setSuccess(
-        `Import réussi ! ${data.nbOngletsTraites || 0} matière(s) traitée(s) | ` +
-        `${data.nbEtudiantsCreees || 0} étudiant(s) créé(s) | ` +
-        `${data.nbNotesImportees || 0} note(s) importée(s)` +
-        (data.erreurs?.length > 0 ? ` | ${data.erreurs.length} avertissement(s)` : '')
+        `Import réussi ! ${nbOnglets} matière(s) traitée(s) | ` +
+        `${nbEtudiants} étudiant(s) créé(s)${nbMisAJour > 0 ? ` (${nbMisAJour} mis à jour)` : ''} | ` +
+        `${nbNotes} note(s) importée(s)` +
+        (nbErreurs > 0 ? ` | ${nbErreurs} avertissement(s)` : '')
       );
       await fetchEtudiants();
     } catch (err: any) {

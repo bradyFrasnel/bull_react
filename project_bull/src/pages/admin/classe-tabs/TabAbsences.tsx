@@ -8,7 +8,7 @@ interface TabAbsencesProps {
   classe: any;
 }
 
-export const TabAbsences: React.FC<TabAbsencesProps> = ({ classeId, classe }) => {
+export const TabAbsences: React.FC<TabAbsencesProps> = ({ classeId: _classeId, classe }) => {
   const [absences, setAbsences] = useState<Absence[]>([]);
   const [selectedEtudiant, setSelectedEtudiant] = useState('');
   const [selectedMatiere, setSelectedMatiere] = useState('');
@@ -201,7 +201,7 @@ export const TabAbsences: React.FC<TabAbsencesProps> = ({ classeId, classe }) =>
                   {absences.map((absence) => (
                     <tr key={absence.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {new Date(absence.date).toLocaleDateString('fr-FR')}
+                        {absence.date ? new Date(absence.date).toLocaleDateString('fr-FR') : '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">{absence.matiere?.libelle}</td>
                       <td className="px-6 py-4 text-sm text-gray-900 text-center font-medium">

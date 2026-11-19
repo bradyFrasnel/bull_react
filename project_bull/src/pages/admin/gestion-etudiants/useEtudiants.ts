@@ -21,6 +21,7 @@ export const useEtudiants = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFiliereId, setSelectedFiliereId] = useState('');
   const [selectedClasseId, setSelectedClasseId] = useState('');
+  const [importing, setImporting] = useState(false);
 
   const fetchFilieres = async () => {
     try {
@@ -166,12 +167,39 @@ export const useEtudiants = () => {
     }
   };
 
+  const handleImportExcel = async (file: File) => {
+    try {
+      setImporting(true);
+      setError('');
+      setSuccess('');
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      if (selectedClasseId) {
+        formDataUpload.append('classeId', selectedClasseId);
+      }
+      const res = await api.post('/auth/admin/import-etudiants', formDataUpload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const { created = 0, failed = 0 } = res.data || {};
+      const msg = `Import terminé : ${created} étudiant(s) inscrit(s)` + (failed > 0 ? `, ${failed} ligne(s) en échec.` : '. Les identifiants ont été envoyés par email.');
+      setSuccess(msg);
+      toast.success(msg);
+      await fetchStudents();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Erreur lors de l'import Excel des étudiants";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return {
     students, loading, error, success, showModal, editingStudent, formData,
-    submitting, classes, filieres, createdCredentials,
+    submitting, importing, classes, filieres, createdCredentials,
     searchTerm, selectedFiliereId, selectedClasseId, studentToDelete,
     setSearchTerm, setSelectedFiliereId, setSelectedClasseId, setStudentToDelete,
     setShowModal, setEditingStudent, setFormData, setError, setSuccess, setCreatedCredentials,
-    handleCreate, handleUpdate, handleDelete, confirmDelete,
+    handleCreate, handleUpdate, handleDelete, confirmDelete, handleImportExcel,
   };
 };

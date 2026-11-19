@@ -13,16 +13,16 @@ interface SubjectI { id: string; libelle: string; coefficient: number; credits: 
 import { FilieresContent } from "./FilieresContent";
 import { ClassesContent } from "./ClassesContent";
 
-type Tab = "semestres" | "ue" | "matieres" | "filieres" | "classes" | "calculs";
+type Tab = "filieres" | "classes" | "semestres" | "ue" | "matieres" | "calculs";
 type ModalMode = "create" | "edit";
 
 export const GestionAcademique: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   const tabParam = searchParams.get("tab") as Tab;
   const filiereParam = searchParams.get("filiereId");
 
-  const [activeTab, setActiveTab] = useState<Tab>(tabParam || "semestres");
+  const [activeTab, setActiveTab] = useState<Tab>(tabParam || "filieres");
   const [selectedFiliereId, setSelectedFiliereId] = useState<string | null>(filiereParam);
 
   useEffect(() => {
@@ -252,25 +252,25 @@ export const GestionAcademique: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Référentiel & Calculs</h1>
-            <p className="text-gray-500 text-sm mt-0.5">Semestres, UE, Matières et Validation des moyennes</p>
+            <p className="text-gray-500 text-sm mt-0.5">Filières, Classes, Semestres, UE, Matières et Validation des moyennes</p>
           </div>
-          {activeTab !== "calculs" && (
+          {activeTab !== "calculs" && activeTab !== "filieres" && activeTab !== "classes" && (
             <button onClick={handleOpenCreate} className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-medium">
               <Plus className="w-4 h-4" /> Ajouter
             </button>
           )}
         </div>
 
-        {/* Onglets */}
+        {/* Onglets dans l'ordre chronologique : Filières -> Classes -> Semestres -> UE -> Matières -> Calculs */}
         <div className="flex flex-wrap gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
-          {(["semestres", "ue", "matieres", "filieres", "classes", "calculs"] as const).map((tab) => (
+          {(["filieres", "classes", "semestres", "ue", "matieres", "calculs"] as const).map((tab) => (
             <button key={tab} onClick={() => { setActiveTab(tab); setError(""); setSuccess(""); }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab ? "bg-white shadow text-blue-600" : "text-gray-600 hover:text-gray-900"}`}>
+              {tab === "filieres" && "Filières"}
+              {tab === "classes" && "Classes"}
               {tab === "semestres" && "Semestres"}
               {tab === "ue" && "Unités d'Ens."}
               {tab === "matieres" && "Matières"}
-              {tab === "filieres" && "Filières"}
-              {tab === "classes" && "Classes"}
               {tab === "calculs" && "Calculs & Validation"}
             </button>
           ))}

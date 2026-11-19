@@ -1,26 +1,23 @@
 import React from 'react';
 import {
-  Plus, AlertCircle, Loader2, Search, CheckCircle, X
+  Plus, AlertCircle, Search, X
 } from 'lucide-react';
 import { useClasses } from './classe-components/useClasses';
 import { ClassList } from './classe-components/ClassList';
 import { ClassForm } from './classe-components/ClassForm';
 import { ClassAssignSemestres } from './classe-components/ClassAssignSemestres';
 import { ClassViewEtudiants } from './classe-components/ClassViewEtudiants';
-import { useNavigate } from 'react-router-dom';
 
 export const ClassesContent: React.FC<{ filiereId?: string | null, onClearFilter?: () => void }> = ({ filiereId, onClearFilter }) => {
   const {
-    classes, semestres, filieres, loading, error, success, submitting,
+    classes, semestres, filieres, error, submitting,
     showModal, editingClasse, formData,
     showAssignModal, selectedClasse, assigning, searchTerm,
     viewingClasse, etudiantsClasse, loadingEtudiants,
-    setSearchTerm, setShowAssignModal, setViewingClasse, setFormData, setError, setSuccess,
+    setSearchTerm, setShowAssignModal, setViewingClasse, setFormData,
     handleOpenCreate, handleOpenEdit, handleCloseModal, handleSubmit, handleDelete,
-    handleOpenEtudiants, handleOpenAssign, isAssigned, handleToggleSemestre
+    handleOpenAssign, isAssigned, handleToggleSemestre
   } = useClasses();
-
-  const navigate = useNavigate();
 
   return (
     <div>
@@ -50,12 +47,6 @@ export const ClassesContent: React.FC<{ filiereId?: string | null, onClearFilter
         <div className="mb-6 flex items-start gap-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <p className="text-red-700">{error}</p>
-        </div>
-      )}
-      {success && (
-        <div className="mb-6 flex items-start gap-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-          <p className="text-green-700">{success}</p>
         </div>
       )}
 

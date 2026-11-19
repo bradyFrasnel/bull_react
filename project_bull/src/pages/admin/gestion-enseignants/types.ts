@@ -1,5 +1,3 @@
-import { Matiere } from '../../../types';
-
 export interface Teacher {
   id: string;
   utilisateurId: string;

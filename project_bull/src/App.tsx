@@ -37,7 +37,7 @@ import { GestionBulletins } from './pages/admin/gestion-bulletins';       // Gé
 import { ModellesBulletins } from './pages/admin/ModellesBulletins';     // Modèles de bulletins
 import { GestionClasses } from './pages/admin/GestionClasses';           // CRUD classes/promotions
 import { ClasseDetails } from './pages/admin/ClasseDetails';             // Page de détails d'une classe
-import { GestionFilieres } from './pages/admin/GestionFilieres';         // CRUD filières
+
 import { AuditLogPage } from './pages/admin/AuditLogPage';               // Journal d'audit
 
 // PAGES SECRÉTARIAT
@@ -126,14 +126,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/filieres"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <GestionFilieres />
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="/admin/academique"
             element={

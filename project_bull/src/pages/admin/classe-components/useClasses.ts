@@ -147,7 +147,7 @@ export const useClasses = () => {
     }
   };
 
-  const handleDelete = async (id: string, nom: string) => {
+  const handleDelete = async (id: string, _nom?: string) => {
     try {
       await api.delete(`/classes/${id}`);
       toast.success('Classe supprimée');

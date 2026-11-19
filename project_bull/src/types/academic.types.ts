@@ -16,6 +16,11 @@ export interface Semestre {
   createdAt?: string;
   updatedAt?: string;
   ues?: UniteEnseignement[];
+  classes?: Array<{
+    semestreId?: string;
+    classeId: string;
+    classe?: Classe;
+  }>;
 }
 
 export interface UniteEnseignement {
@@ -53,6 +58,15 @@ export interface Etudiant {
   bac_type: string;
   annee_bac: number;
   provenance: string;   // établissement/ville d'origine
+  classeId?: string;
+  statut?: string;
+  classe?: {
+    id: string;
+    nom: string;
+    code: string;
+    anneeUniversitaire?: string;
+    filiere?: { id: string; nom: string; code: string };
+  };
   createdAt?: string;
   updatedAt?: string;
   utilisateur?: {

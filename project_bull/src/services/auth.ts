@@ -18,7 +18,7 @@
  * La clé dynamique correspond au rôle : admin, etudiant, enseignant, secretariat.
  */
 
-import { api } from './api';
+import { api, clearApiCache } from './api';
 import { UserRole, LoginResponse } from '../types';
 
 export const authService = {
@@ -81,6 +81,7 @@ export const authService = {
    * suivantes seront non-authentifiées.
    */
   logout() {
+    clearApiCache();
     localStorage.removeItem('access_token');
     localStorage.removeItem('user_role');
     localStorage.removeItem('user_data');

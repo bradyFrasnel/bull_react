@@ -34,7 +34,6 @@ export const SaisirNotes: React.FC = () => {
   const { user } = useAuth();
 
   const [matieres, setMatieres] = useState<Matiere[]>([]);
-  const [etudiants, setEtudiants] = useState<Etudiant[]>([]);
   const [selectedMatiere, setSelectedMatiere] = useState<string>('');
 
   const [lignesReleve, setLignesReleve] = useState<LigneReleve[]>([]);
@@ -58,12 +57,12 @@ export const SaisirNotes: React.FC = () => {
   }, [location.state]);
 
   useEffect(() => {
-    if (selectedMatiere && etudiants.length > 0) {
+    if (selectedMatiere) {
       buildGrid();
     } else {
       setLignesReleve([]);
     }
-  }, [selectedMatiere, etudiants]);
+  }, [selectedMatiere]);
 
   const fetchInitialData = async () => {
     if (!user?.id) return;
@@ -72,7 +71,7 @@ export const SaisirNotes: React.FC = () => {
       setLoading(true);
       setError('');
 
-      // Récupérer l'enseignant et ses matières
+      // Récupérer l'enseignant et ses matières assignées
       const enseignantData = await enseignantService.getByUserId(user.id);
       const matieresData = await enseignantService.getMatieres(enseignantData.id);
       setMatieres(matieresData);
@@ -80,10 +79,6 @@ export const SaisirNotes: React.FC = () => {
       if (matieresData.length > 0 && !selectedMatiere && !(location.state as any)?.matiereId) {
         setSelectedMatiere(matieresData[0].id);
       }
-
-      // Récupérer tous les étudiants
-      const etudiantsData = await etudiantService.getAll();
-      setEtudiants(etudiantsData);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erreur lors du chargement initial');
       console.error(err);
@@ -99,10 +94,13 @@ export const SaisirNotes: React.FC = () => {
       setLoadingGrid(true);
       setError('');
 
-      // Récupérer les évaluations de cette matière pour construire la grille
-      const evaluationsData = await evaluationService.getByMatiere(selectedMatiere);
+      // Récupérer uniquement les étudiants rattachés aux classes de cette matière + leurs évaluations
+      const [etudiantsData, evaluationsData] = await Promise.all([
+        etudiantService.getAll({ matiereId: selectedMatiere }),
+        evaluationService.getByMatiere(selectedMatiere),
+      ]);
 
-      const newLignes: LigneReleve[] = etudiants.map(etud => {
+      const newLignes: LigneReleve[] = etudiantsData.map(etud => {
         // On vérifie le `utilisateurId` ou l'`id` selon le format du backend
         const studentId = etud.id || etud.utilisateurId;
         const studentEvals = evaluationsData.filter(e => e.utilisateurId === studentId);
@@ -365,6 +363,9 @@ export const SaisirNotes: React.FC = () => {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Matricule
                     </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Classe
+                    </th>
                     <th scope="col" className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Contrôle
                     </th>
@@ -373,9 +374,6 @@ export const SaisirNotes: React.FC = () => {
                     </th>
                     <th scope="col" className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Rattrapage
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
-                      Moyenne
                     </th>
                   </tr>
                 </thead>
@@ -393,7 +391,16 @@ export const SaisirNotes: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{ligne.etudiant.matricule}</div>
+                          <div className="text-sm font-mono text-gray-500">{ligne.etudiant.matricule}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {ligne.etudiant.classe ? (
+                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">
+                              {ligne.etudiant.classe.nom}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">—</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <input

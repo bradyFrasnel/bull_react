@@ -1,4 +1,4 @@
-import { Etudiant, Semestre } from '../../../types';
+import { Etudiant } from '../../../types';
 import { BulletinData } from '../../../components/BulletinDocument';
 
 export type Mode = 'accueil' | 'individuel' | 'promotion' | 'recap' | 'stats';

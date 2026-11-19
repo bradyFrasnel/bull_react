@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { evaluationService } from '../../../services/evaluation.service';
-import { absenceService } from '../../../services';
 import { Save, AlertCircle, Loader2, RefreshCw, Edit, Download, Upload } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Matiere } from '../../../types';
@@ -25,7 +24,7 @@ interface ReleveRow {
   rattrapageAutorise?: boolean;
 }
 
-export const TabSaisieNotes: React.FC<TabSaisieNotesProps> = ({ classeId, classe }) => {
+export const TabSaisieNotes: React.FC<TabSaisieNotesProps> = ({ classeId: _classeId, classe }) => {
   const [matieres, setMatieres] = useState<Matiere[]>([]);
   const [selectedMatiere, setSelectedMatiere] = useState('');
   const [rows, setRows] = useState<ReleveRow[]>([]);
@@ -148,34 +147,68 @@ export const TabSaisieNotes: React.FC<TabSaisieNotesProps> = ({ classeId, classe
   const handleExportExcel = () => {
     if (!selectedMatiere || rows.length === 0) return;
 
-    // Preparer les donnees pour Excel
-    const excelData = rows.map(r => ({
-      Matricule: r.matricule,
-      Nom: r.nom,
-      Prénom: r.prenom,
-      'Note CC (/20)': r.noteCC || '',
-      'Note Examen (/20)': r.noteExamen || '',
-      'Rattrapage (/20)': r.noteRattrapage || ''
-    }));
+    const matiereObj = matieres.find(m => m.id === selectedMatiere);
+    const matiereName = matiereObj?.libelle || 'Matiere';
+    const coef = matiereObj?.coefficient ?? 1;
 
-    const ws = XLSX.utils.json_to_sheet(excelData);
+    // Retrouver le semestre associé à cette matière dans la classe
+    let semestreNum = '1';
+    let semestreLibelle = 'Semestre 1';
+    if (classe?.semestres) {
+      for (const sa of classe.semestres) {
+        const sem = sa.semestre;
+        if (sem?.ues?.some((ue: any) => ue.matieres?.some((m: any) => m.id === selectedMatiere))) {
+          semestreLibelle = sem.libelle || sem.code || 'Semestre 1';
+          const mNum = String(sem.code || sem.libelle || '1').match(/(\d+)/);
+          if (mNum) semestreNum = mNum[1];
+          break;
+        }
+      }
+    }
 
-    // Auto-ajuster la largeur des colonnes
-    const colWidths = [
-      { wch: 15 }, // Matricule
+    const classeNom = classe?.nom || classe?.code || 'LP ASUR';
+    const annee = classe?.anneeUniversitaire || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
+
+    // En-tête institutionnel conforme au modèle attendu par ImportService
+    const aoa: any[][] = [
+      ['INPTIC — RELEVÉ DE NOTES PAR MATIÈRE'],
+      [''],
+      ['Classe', classeNom, '', 'Année universitaire', annee],
+      ['Semestre', semestreNum, semestreLibelle, 'Coefficient', coef],
+      ['Matière', matiereName],
+      [''],
+      ['N°', 'Matricule', 'Élève', 'Nom', 'Prénom', 'Note CC (/20)', 'Note Examen (/20)', 'Rattrapage (/20)'],
+    ];
+
+    rows.forEach((r, idx) => {
+      aoa.push([
+        idx + 1,
+        r.matricule || '',
+        `${r.nom} ${r.prenom}`.trim(),
+        r.nom || '',
+        r.prenom || '',
+        r.noteCC !== '' ? Number(r.noteCC) : '',
+        r.noteExamen !== '' ? Number(r.noteExamen) : '',
+        r.noteRattrapage !== '' ? Number(r.noteRattrapage) : '',
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [
+      { wch: 6 },  // N°
+      { wch: 16 }, // Matricule
+      { wch: 30 }, // Élève
       { wch: 20 }, // Nom
       { wch: 20 }, // Prénom
       { wch: 15 }, // Note CC
-      { wch: 15 }, // Note Examen
-      { wch: 15 }  // Rattrapage
+      { wch: 18 }, // Note Examen
+      { wch: 16 }, // Rattrapage
     ];
-    ws['!cols'] = colWidths;
 
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Notes");
-
-    const matiereName = matieres.find(m => m.id === selectedMatiere)?.libelle || 'Matiere';
-    XLSX.writeFile(wb, `Releve_Notes_${matiereName.replace(/\s+/g, '_')}.xlsx`);
+    const safeSheetName = matiereName.replace(/[\\/?*[\]:]/g, '').substring(0, 28) || 'Notes';
+    XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+    XLSX.writeFile(wb, `Releve_Notes_${classe?.code || 'Classe'}_${matiereName.replace(/\s+/g, '_')}.xlsx`);
   };
 
   const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,31 +222,60 @@ export const TabSaisieNotes: React.FC<TabSaisieNotesProps> = ({ classeId, classe
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws) as any[];
+
+        // Détecter automatiquement la ligne d'en-tête du tableau (compatible avec ou sans en-tête institutionnel)
+        const rows2D: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        let headerRowIndex = 0;
+        for (let r = 0; r < Math.min(20, rows2D.length); r++) {
+          const cells = (rows2D[r] || []).map((c) => String(c ?? '').trim().toLowerCase());
+          if (cells.includes('matricule') || cells.some((c) => c.includes('note cc') || c.includes('élève') || c.includes('eleve'))) {
+            headerRowIndex = r;
+            break;
+          }
+        }
+        const data = XLSX.utils.sheet_to_json(ws, { range: headerRowIndex, defval: '' }) as any[];
 
         let updatedCount = 0;
         let ignoredCount = 0;
 
-        // Mettre a jour les rows existantes
+        // Mettre a jour les rows existantes (par matricule ou par couple Nom + Prénom)
         setRows(prevRows => {
           const newRows = [...prevRows];
           data.forEach(row => {
-            const matricule = row['Matricule'];
-            if (!matricule) return;
+            const matricule = String(row['Matricule'] || row['matricule'] || '').trim();
+            const nom = String(row['Nom'] || row['nom'] || '').trim().toLowerCase();
+            const prenom = String(row['Prénom'] || row['Prenom'] || row['prenom'] || '').trim().toLowerCase();
+            const eleve = String(row['Élève'] || row['Eleve'] || '').trim().toLowerCase();
+            if (!matricule && !nom && !eleve) return;
 
-            const rowIndex = newRows.findIndex(r => r.matricule === matricule);
+            let rowIndex = matricule ? newRows.findIndex(r => r.matricule === matricule) : -1;
+            if (rowIndex === -1 && nom) {
+              rowIndex = newRows.findIndex(
+                r => r.nom.trim().toLowerCase() === nom && (!prenom || r.prenom.trim().toLowerCase() === prenom),
+              );
+            }
+            if (rowIndex === -1 && eleve) {
+              rowIndex = newRows.findIndex(
+                r => `${r.nom} ${r.prenom}`.trim().toLowerCase() === eleve,
+              );
+            }
+
             if (rowIndex !== -1) {
               const parseNote = (val: any) => {
                 if (val === undefined || val === null || val === '') return '';
-                const num = Number(val);
+                const num = Number(String(val).replace(',', '.'));
                 return isNaN(num) || num < 0 || num > 20 ? '' : String(num);
               };
 
+              const ccVal = row['Note CC (/20)'] ?? row['CC'] ?? row['Note CC'];
+              const exVal = row['Note Examen (/20)'] ?? row['Examen'] ?? row['Note Examen'];
+              const raVal = row['Rattrapage (/20)'] ?? row['Rattrapage'];
+
               newRows[rowIndex] = {
                 ...newRows[rowIndex],
-                noteCC: parseNote(row['Note CC (/20)']),
-                noteExamen: parseNote(row['Note Examen (/20)']),
-                noteRattrapage: parseNote(row['Rattrapage (/20)'])
+                noteCC: parseNote(ccVal),
+                noteExamen: parseNote(exVal),
+                noteRattrapage: parseNote(raVal)
               };
               updatedCount++;
             } else {

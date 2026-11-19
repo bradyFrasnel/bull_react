@@ -147,9 +147,10 @@ const normalizeEtudiant = (e: any): Etudiant => ({
 });
 
 export const etudiantService = {
-  async getAll(): Promise<Etudiant[]> {
-    const response = await api.get('/etudiants');
-    return (response.data || []).map(normalizeEtudiant);
+  async getAll(params?: { matiereId?: string; classeId?: string }): Promise<Etudiant[]> {
+    const response = await api.get('/etudiants', { params });
+    const raw = response.data?.data || response.data || [];
+    return (Array.isArray(raw) ? raw : []).map(normalizeEtudiant);
   },
 
   async getById(id: string): Promise<Etudiant> {

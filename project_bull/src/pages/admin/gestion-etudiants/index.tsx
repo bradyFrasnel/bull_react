@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { AdminLayout } from '../../../components/AdminLayout';
-import { Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2, CheckCircle, Download, Search, Filter } from 'lucide-react';
+import { Plus, Trash2, CreditCard as Edit2, AlertCircle, Loader2, CheckCircle, Download, Upload, FileSpreadsheet, Search, Filter } from 'lucide-react';
 import { useEtudiants } from './useEtudiants';
 import { Student, EMPTY_FORM, BAC_TYPES } from './types';
 import { ConfirmModal } from '../../../components/ConfirmModal';
@@ -8,12 +8,40 @@ import { ConfirmModal } from '../../../components/ConfirmModal';
 export const GestionEtudiants: React.FC = () => {
   const {
     students, loading, error, success, showModal, editingStudent, formData,
-    submitting, classes, filieres, createdCredentials,
+    submitting, importing, classes, filieres, createdCredentials,
     searchTerm, selectedFiliereId, selectedClasseId, studentToDelete,
     setSearchTerm, setSelectedFiliereId, setSelectedClasseId, setStudentToDelete,
     setShowModal, setEditingStudent, setFormData, setCreatedCredentials,
-    handleCreate, handleUpdate, handleDelete, confirmDelete
+    handleCreate, handleUpdate, handleDelete, confirmDelete, handleImportExcel
   } = useEtudiants();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDownloadTemplate = () => {
+    const sample = [
+      {
+        'Nom': 'MOUKOMA',
+        'Prénom': 'Brady',
+        'Email': 'brady.moukoma@inptic.ga',
+        'Matricule': '',
+        'Date de naissance': '2002-05-15',
+        'Lieu de naissance': 'Libreville',
+        'Type Bac': 'C',
+        'Année Bac': 2021,
+        'Provenance': 'Lycée National Léon Mba',
+      },
+    ];
+    import('xlsx').then(XLSX => {
+      const ws = XLSX.utils.json_to_sheet(sample);
+      ws['!cols'] = [
+        { wch: 18 }, { wch: 18 }, { wch: 28 }, { wch: 16 },
+        { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 26 },
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Etudiants');
+      XLSX.writeFile(wb, 'Modele_Import_Etudiants.xlsx');
+    });
+  };
 
   const filteredClasses = selectedFiliereId 
     ? classes.filter(c => c.filiereId === selectedFiliereId)
@@ -92,6 +120,34 @@ export const GestionEtudiants: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImportExcel(file);
+                e.target.value = '';
+              }}
+            />
+            <button
+              onClick={handleDownloadTemplate}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors shadow-sm"
+              title="Télécharger le modèle Excel d'inscription des étudiants"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-indigo-600" />
+              Modèle Excel
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium transition-colors shadow-sm"
+              title="Importer plusieurs étudiants depuis un fichier Excel (envoi automatique des identifiants par email)"
+            >
+              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              Importer Excel
+            </button>
             {filteredStudents.length > 0 && (
               <button
                 onClick={handleExportExcel}
@@ -111,6 +167,19 @@ export const GestionEtudiants: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {error && (
+          <div className="mb-6 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+        {success && (
+          <div className="mb-6 flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <p className="text-green-700 text-sm">{success}</p>
+          </div>
+        )}
 
 
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
