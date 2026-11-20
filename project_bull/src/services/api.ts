@@ -137,7 +137,7 @@ const attachInterceptors = (instance: ReturnType<typeof axios.create>) => {
       const isLoginRequest = requestUrl.includes('/auth/') && requestUrl.includes('/login');
 
       // Gestion du Rate-Limiting (HTTP 429 Too Many Requests)
-      if (status === 429) {
+      if (status === 429 && !isLoginRequest) {
         const now = Date.now();
         if (now - lastRateLimitToastAt > 4000) {
           lastRateLimitToastAt = now;

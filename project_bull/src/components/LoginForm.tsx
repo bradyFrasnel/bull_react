@@ -131,13 +131,13 @@ export const LoginForm: React.FC = () => {
     } catch (err: any) {
       if (err.response?.status === 429) {
         const retryHeader = Number(err.response?.headers?.['retry-after']);
-        const waitSec = Number.isFinite(retryHeader) && retryHeader > 0 ? retryHeader : 300;
+        // Garantit un verrouillage de 5 minutes (300s) si l'en-tête est absent ou erroné (<= 5s)
+        const waitSec = Number.isFinite(retryHeader) && retryHeader > 5 ? retryHeader : 300;
         const unlockAt = Date.now() + waitSec * 1000;
         localStorage.setItem(lockStorageKey, String(unlockAt));
         setCooldownSeconds(waitSec);
         setError(
-          err.response?.data?.message ||
-            `Trop de tentatives de connexion. Veuillez patienter ${formatCooldown(waitSec)}.`
+          `Trop de tentatives de connexion. Veuillez patienter ${formatCooldown(waitSec)}.`
         );
         return;
       }
