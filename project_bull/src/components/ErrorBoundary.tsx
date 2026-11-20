@@ -17,11 +17,33 @@ export class ErrorBoundary extends Component<Props, State> {
     this.state = { hasError: false, error: null };
   }
 
+  static isDomInterferenceError(error: Error | null): boolean {
+    if (!error) return false;
+    const msg = error.message || '';
+    return (
+      error.name === 'NotFoundError' ||
+      msg.includes('insertBefore') ||
+      msg.includes('removeChild') ||
+      msg.includes('not a child of this node')
+    );
+  }
+
   static getDerivedStateFromError(error: Error): State {
+    // Si l'erreur provient d'une interférence DOM externe (traducteur, extension, autofill),
+    // on ne bloque pas l'application : on laisse React poursuivre son rendu.
+    if (ErrorBoundary.isDomInterferenceError(error)) {
+      console.warn('Interférence DOM externe interceptée et neutralisée:', error);
+      return { hasError: false, error: null };
+    }
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    if (ErrorBoundary.isDomInterferenceError(error)) {
+      console.warn('DOM mutation race condition ignorée:', error.message);
+      this.setState({ hasError: false, error: null });
+      return;
+    }
     console.error('ErrorBoundary caught:', error, errorInfo);
   }
 
@@ -30,7 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   render() {
-    if (this.state.hasError) {
+    if (this.state.hasError && !ErrorBoundary.isDomInterferenceError(this.state.error)) {
       if (this.props.fallback) return this.props.fallback;
 
       return (
